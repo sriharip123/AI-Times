@@ -97,8 +97,8 @@ Code merged to main → GitHub Actions triggered
 Add these to your README (replace YOUR_USERNAME and YOUR_REPO):
 
 ```markdown
-![Tests](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/test.yml/badge.svg)
-![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)
+![Tests](https://github.com/sriharip123/AI-Times/actions/workflows/test.yml/badge.svg)
+![CI](https://github.com/sriharip123/AI-Times/actions/workflows/ci.yml/badge.svg)
 ```
 
 ## Local Testing Before Push
@@ -129,7 +129,7 @@ dotnet test --configuration Release --verbosity normal
 
 ## Next Steps
 
-1. **Update Badge URLs**: Edit `README.md` and replace `YOUR_USERNAME/YOUR_REPO` with your actual GitHub username and repository name
+1. ~~**Update Badge URLs**~~: ✅ Already updated with `sriharip123/AI-Times`
 
 2. **Enable Actions**: Ensure GitHub Actions is enabled in your repository settings
 

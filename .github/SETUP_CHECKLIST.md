@@ -4,15 +4,15 @@ Use this checklist to complete the GitHub Actions setup for your repository.
 
 ## ✅ Setup Steps
 
-### 1. Update Status Badges
-- [ ] Open `README.md`
-- [ ] Replace `YOUR_USERNAME` with your GitHub username
-- [ ] Replace `YOUR_REPO` with your repository name
-- [ ] Save the file
+### 1. ~~Update Status Badges~~ ✅ DONE
+- [x] Open `README.md`
+- [x] Replace `YOUR_USERNAME` with your GitHub username
+- [x] Replace `YOUR_REPO` with your repository name
+- [x] Save the file
 
-Example:
+✅ Updated to:
 ```markdown
-![Tests](https://github.com/johndoe/JSON-Whisperer/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/sriharip123/AI-Times/actions/workflows/test.yml/badge.svg)
 ```
 
 ### 2. Commit and Push Workflow Files
@@ -87,7 +87,7 @@ gh run view <run-id>
 ```
 
 ### View in Browser
-1. Go to `https://github.com/YOUR_USERNAME/YOUR_REPO/actions`
+1. Go to `https://github.com/sriharip123/AI-Times/actions`
 2. Click on any workflow run
 3. Review logs and test results
 

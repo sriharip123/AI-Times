@@ -1,7 +1,7 @@
 # JSON-Whisperer
 
-![Tests](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/test.yml/badge.svg)
-![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)
+![Tests](https://github.com/sriharip123/AI-Times/actions/workflows/test.yml/badge.svg)
+![CI](https://github.com/sriharip123/AI-Times/actions/workflows/ci.yml/badge.svg)
 ![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
