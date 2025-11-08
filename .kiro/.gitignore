@@ -1,0 +1,25 @@
+# Kiro IDE - Ignore user-specific and temporary files
+
+# User settings (personal preferences)
+settings/
+
+# Cache files
+cache/
+*.cache
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Log files
+logs/
+*.log
+
+# Keep specs directory (project documentation)
+!specs/
+!specs/**/*
+
+# Keep steering rules if they exist (team conventions)
+!steering/
+!steering/**/*

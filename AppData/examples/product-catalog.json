@@ -1,0 +1,14 @@
+{
+  "products": [
+    {
+      "id": "PROD-001",
+      "name": "Wireless Headphones",
+      "price": 99.99,
+      "category": "Electronics",
+      "specifications": {
+        "battery_life": "20 hours",
+        "connectivity": "Bluetooth 5.0"
+      }
+    }
+  ]
+}

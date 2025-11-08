@@ -1,0 +1,357 @@
+version: '3.8'
+
+# Production configuration for JSON-Whisperer
+services:
+  # Production ScyllaDB with clustering support
+  scylla-node1:
+    image: scylladb/scylla:latest
+    container_name: json-whisperer-scylla-node1
+    hostname: scylla-node1
+    ports:
+      - "9042:9042"
+    volumes:
+      - scylla_node1_data:/var/lib/scylla
+      - ./scylla-config/production:/etc/scylla:ro
+    environment:
+      - SCYLLA_CLUSTER_NAME=json-whisperer-prod
+      - SCYLLA_DC=datacenter1
+      - SCYLLA_RACK=rack1
+      - SCYLLA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    command: >
+      --seeds=scylla-node1,scylla-node2,scylla-node3
+      --smp=4 
+      --memory=4G 
+      --overprovisioned=0
+      --api-address=0.0.0.0
+    networks:
+      - json-whisperer-prod-network
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 180s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  scylla-node2:
+    image: scylladb/scylla:latest
+    container_name: json-whisperer-scylla-node2
+    hostname: scylla-node2
+    volumes:
+      - scylla_node2_data:/var/lib/scylla
+      - ./scylla-config/production:/etc/scylla:ro
+    environment:
+      - SCYLLA_CLUSTER_NAME=json-whisperer-prod
+      - SCYLLA_DC=datacenter1
+      - SCYLLA_RACK=rack2
+      - SCYLLA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    command: >
+      --seeds=scylla-node1,scylla-node2,scylla-node3
+      --smp=4 
+      --memory=4G 
+      --overprovisioned=0
+      --api-address=0.0.0.0
+    networks:
+      - json-whisperer-prod-network
+    depends_on:
+      - scylla-node1
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 180s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+
+  scylla-node3:
+    image: scylladb/scylla:latest
+    container_name: json-whisperer-scylla-node3
+    hostname: scylla-node3
+    volumes:
+      - scylla_node3_data:/var/lib/scylla
+      - ./scylla-config/production:/etc/scylla:ro
+    environment:
+      - SCYLLA_CLUSTER_NAME=json-whisperer-prod
+      - SCYLLA_DC=datacenter1
+      - SCYLLA_RACK=rack3
+      - SCYLLA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    command: >
+      --seeds=scylla-node1,scylla-node2,scylla-node3
+      --smp=4 
+      --memory=4G 
+      --overprovisioned=0
+      --api-address=0.0.0.0
+    networks:
+      - json-whisperer-prod-network
+    depends_on:
+      - scylla-node1
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 180s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+
+  # Production Ollama with optimized settings
+  ollama:
+    image: ollama/ollama:latest
+    container_name: json-whisperer-ollama-prod
+    volumes:
+      - ollama_prod_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=json-whisperer-app
+      - OLLAMA_NUM_PARALLEL=8
+      - OLLAMA_MAX_LOADED_MODELS=3
+      - OLLAMA_MAX_QUEUE=512
+    networks:
+      - json-whisperer-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '2.0'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # Production JSON-Whisperer Application
+  json-whisperer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: final
+    image: json-whisperer:production
+    container_name: json-whisperer-app-prod
+    depends_on:
+      scylla-node1:
+        condition: service_healthy
+      scylla-node2:
+        condition: service_healthy
+      scylla-node3:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    environment:
+      # Production environment
+      - ASPNETCORE_ENVIRONMENT=Production
+      
+      # Ollama Configuration
+      - Ollama__BaseUrl=http://ollama:11434
+      - Ollama__ModelName=mistral
+      - Ollama__EmbeddingModel=nomic-embed-text
+      - Ollama__TimeoutSeconds=120
+      - Ollama__RetryAttempts=5
+      - Ollama__MaxConcurrentRequests=10
+      
+      # ScyllaDB Cluster Configuration
+      - ScyllaDb__ContactPoints=scylla-node1,scylla-node2,scylla-node3
+      - ScyllaDb__Port=9042
+      - ScyllaDb__Keyspace=json_whisperer_prod
+      - ScyllaDb__DataCenter=datacenter1
+      - ScyllaDb__CreateKeyspaceIfNotExists=false
+      - ScyllaDb__ReplicationFactor=3
+      - ScyllaDb__ConsistencyLevel=Quorum
+      - ScyllaDb__MaxConnectionsPerHost=16
+      - ScyllaDb__EnableCompression=true
+      
+      # Vector Configuration
+      - Vector__EnableSimilarityMatching=true
+      - Vector__SimilarityThreshold=0.75
+      - Vector__MaxSimilarResults=10
+      - Vector__AppDataPath=/app/AppData
+      - Vector__BatchSize=200
+      - Vector__CacheEmbeddings=true
+      - Vector__EmbeddingCacheExpirationHours=48
+      - Vector__EnableVectorCompression=true
+      
+      # Application Configuration
+      - Application__VerboseMode=false
+      - Application__EnablePerformanceMetrics=true
+      - Application__MaxJsonSizeBytes=52428800
+      - Application__EnableCaching=true
+      - Application__CacheExpirationMinutes=60
+      
+      # Logging Configuration
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__JSON_Whisperer=Information
+      - Logging__LogLevel__Microsoft=Error
+      - Logging__File__Enabled=true
+      - Logging__File__Path=/app/logs/json-whisperer.log
+      - Logging__File__MaxFileSizeBytes=10485760
+      - Logging__File__MaxFiles=10
+      
+      # Performance Configuration
+      - Performance__EnableTiming=true
+      - Performance__EnableMemoryTracking=true
+      - Performance__WarnOnSlowOperationsMs=10000
+      - Performance__MaxMemoryUsageMB=2048
+      - Performance__EnableGarbageCollectionMetrics=true
+    volumes:
+      - /var/log/json-whisperer:/app/logs
+      - /opt/json-whisperer/data:/app/AppData:ro
+      - json_whisperer_prod_cache:/app/cache
+    networks:
+      - json-whisperer-prod-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "dotnet", "JSON-Whisperer.dll", "--health-check"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+  # Load Balancer (HAProxy)
+  load-balancer:
+    image: haproxy:latest
+    container_name: json-whisperer-lb
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8404:8404"  # HAProxy stats
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./ssl:/etc/ssl/certs:ro
+    depends_on:
+      - json-whisperer
+    networks:
+      - json-whisperer-prod-network
+    restart: unless-stopped
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: json-whisperer-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-prod.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_prod_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - json-whisperer-prod-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: json-whisperer-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./monitoring/grafana-prod:/etc/grafana/provisioning:ro
+    networks:
+      - json-whisperer-prod-network
+    restart: unless-stopped
+
+  # Log aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: json-whisperer-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_prod_data:/loki
+    networks:
+      - json-whisperer-prod-network
+    restart: unless-stopped
+
+networks:
+  json-whisperer-prod-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  scylla_node1_data:
+    driver: local
+  scylla_node2_data:
+    driver: local
+  scylla_node3_data:
+    driver: local
+  ollama_prod_data:
+    driver: local
+  json_whisperer_prod_cache:
+    driver: local
+  prometheus_prod_data:
+    driver: local
+  grafana_prod_data:
+    driver: local
+  loki_prod_data:
+    driver: local

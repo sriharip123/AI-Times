@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <PaketPropsVersion>6.0.0</PaketPropsVersion>
+        <PaketPropsLoaded>true</PaketPropsLoaded>
+    </PropertyGroup>
+
+    <ItemGroup Condition="($(DesignTimeBuild) == true) AND ($(TargetFrameworkIdentifier) == '.NETCoreApp' And $(TargetFrameworkVersion) == 'v9.0')">
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.CodeCoverage">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">18.0</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.Testing.Platform">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">2.0.1</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.Testing.Extensions.TrxReport.Abstractions">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">2.0.1</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.Testing.Platform.MSBuild">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">2.0.1</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.TestPlatform.AdapterUtilities">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">18.0</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Newtonsoft.Json">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">13.0.4</Version>
+        </PackageReference>
+        <PackageReference  Include="NUnit">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">4.4</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="System.Diagnostics.DiagnosticSource">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">9.0.10</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.ApplicationInsights">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">2.23</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.Testing.Extensions.Telemetry">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">2.0.1</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="System.Reflection.Metadata">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">9.0.10</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.TestPlatform.ObjectModel">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">18.0</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.Testing.Extensions.VSTestBridge">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">2.0.1</Version>
+        </PackageReference>
+        <PackageReference Condition=" '$(ManagePackageVersionsCentrally)' != 'true' " Include="Microsoft.TestPlatform.TestHost">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">18.0</Version>
+        </PackageReference>
+        <PackageReference  Include="Microsoft.NET.Test.Sdk">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">18.0</Version>
+        </PackageReference>
+        <PackageReference  Include="NUnit3TestAdapter">
+            <Version Condition=" '$(ManagePackageVersionsCentrally)' != 'true' ">5.2</Version>
+        </PackageReference>
+        <PackageVersion Include="Microsoft.CodeCoverage">
+            <Version>18.0</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.Testing.Platform">
+            <Version>2.0.1</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport.Abstractions">
+            <Version>2.0.1</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.Testing.Platform.MSBuild">
+            <Version>2.0.1</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.TestPlatform.AdapterUtilities">
+            <Version>18.0</Version>
+        </PackageVersion>
+        <PackageVersion Include="Newtonsoft.Json">
+            <Version>13.0.4</Version>
+        </PackageVersion>
+        <PackageVersion Include="NUnit">
+            <Version>4.4</Version>
+        </PackageVersion>
+        <PackageVersion Include="System.Diagnostics.DiagnosticSource">
+            <Version>9.0.10</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.ApplicationInsights">
+            <Version>2.23</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.Testing.Extensions.Telemetry">
+            <Version>2.0.1</Version>
+        </PackageVersion>
+        <PackageVersion Include="System.Reflection.Metadata">
+            <Version>9.0.10</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.TestPlatform.ObjectModel">
+            <Version>18.0</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge">
+            <Version>2.0.1</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.TestPlatform.TestHost">
+            <Version>18.0</Version>
+        </PackageVersion>
+        <PackageVersion Include="Microsoft.NET.Test.Sdk">
+            <Version>18.0</Version>
+        </PackageVersion>
+        <PackageVersion Include="NUnit3TestAdapter">
+            <Version>5.2</Version>
+        </PackageVersion>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,88 @@
+version: '3.8'
+
+# Development overrides for docker-compose.yml
+services:
+  scylla:
+    # Development-specific ScyllaDB configuration
+    command: >
+      --seeds=scylla-node1 
+      --smp=1 
+      --memory=1G 
+      --overprovisioned=1 
+      --api-address=0.0.0.0
+      --developer-mode=1
+    environment:
+      - SCYLLA_CLUSTER_NAME=json-whisperer-dev
+    ports:
+      - "9042:9042"
+      - "10000:10000"  # REST API for development
+
+  ollama:
+    # Development-specific Ollama configuration
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_DEBUG=1
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    ports:
+      - "11434:11434"
+
+  json-whisperer:
+    # Development-specific application configuration
+    environment:
+      # Enable verbose logging for development
+      - Logging__LogLevel__Default=Debug
+      - Logging__LogLevel__JSON_Whisperer=Debug
+      - Logging__Console__IncludeScopes=true
+      
+      # Development-friendly settings
+      - Application__VerboseMode=true
+      - Performance__EnableTiming=true
+      - Performance__EnableMemoryTracking=true
+      
+      # Faster development cycles
+      - Vector__BatchSize=50
+      - Vector__SimilarityThreshold=0.6
+      - Ollama__TimeoutSeconds=30
+      
+      # Development ScyllaDB settings
+      - ScyllaDb__Keyspace=json_whisperer_dev
+      - ScyllaDb__ConsistencyLevel=LocalOne
+    volumes:
+      # Mount source code for development (if using hot reload)
+      - ./JSON-Whisperer:/app/src:ro
+      - ./AppData:/app/AppData
+      - ./logs:/app/logs
+      - ./dev-cache:/app/cache
+    # Enable debugging port
+    ports:
+      - "5000:5000"  # HTTP
+      - "5001:5001"  # HTTPS
+    # Override resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # Development database admin tool
+  scylla-web:
+    image: scylladb/scylla-manager:latest
+    container_name: json-whisperer-scylla-web
+    ports:
+      - "56080:56080"
+    depends_on:
+      - scylla
+    environment:
+      - SCYLLA_MANAGER_DB_HOSTS=scylla:9042
+    networks:
+      - json-whisperer-network
+    restart: unless-stopped
+
+volumes:
+  dev-cache:
+    driver: local

@@ -1,0 +1,234 @@
+version: '3.8'
+
+services:
+  # ScyllaDB Database Service
+  scylla:
+    image: scylladb/scylla:latest
+    container_name: json-whisperer-scylla
+    hostname: scylla-node1
+    ports:
+      - "9042:9042"    # CQL port
+      - "9160:9160"    # Thrift port
+      - "7000:7000"    # Inter-node communication
+      - "7001:7001"    # TLS inter-node communication
+      - "10000:10000"  # REST API
+    volumes:
+      - scylla_data:/var/lib/scylla
+      - ./scylla-config:/etc/scylla:ro
+    environment:
+      - SCYLLA_CLUSTER_NAME=json-whisperer-cluster
+      - SCYLLA_DC=datacenter1
+      - SCYLLA_RACK=rack1
+      - SCYLLA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    command: >
+      --seeds=scylla-node1 
+      --smp=2 
+      --memory=2G 
+      --overprovisioned=1 
+      --api-address=0.0.0.0
+    networks:
+      - json-whisperer-network
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Ollama AI Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: json-whisperer-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama-models:/models:ro
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_MAX_LOADED_MODELS=2
+    networks:
+      - json-whisperer-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # JSON-Whisperer Application
+  json-whisperer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: json-whisperer-app
+    depends_on:
+      scylla:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    environment:
+      # Ollama Configuration
+      - Ollama__BaseUrl=http://ollama:11434
+      - Ollama__ModelName=mistral
+      - Ollama__EmbeddingModel=nomic-embed-text
+      - Ollama__TimeoutSeconds=60
+      - Ollama__RetryAttempts=5
+      - Ollama__MaxConcurrentRequests=5
+      
+      # ScyllaDB Configuration
+      - ScyllaDb__ContactPoints=scylla
+      - ScyllaDb__Port=9042
+      - ScyllaDb__Keyspace=json_whisperer
+      - ScyllaDb__DataCenter=datacenter1
+      - ScyllaDb__CreateKeyspaceIfNotExists=true
+      - ScyllaDb__ReplicationFactor=1
+      - ScyllaDb__ConsistencyLevel=LocalQuorum
+      
+      # Vector Configuration
+      - Vector__EnableSimilarityMatching=true
+      - Vector__SimilarityThreshold=0.7
+      - Vector__MaxSimilarResults=5
+      - Vector__AppDataPath=/app/AppData
+      - Vector__InitializeKnowledgeBase=true
+      - Vector__BatchSize=100
+      - Vector__CacheEmbeddings=true
+      
+      # Application Configuration
+      - Application__VerboseMode=false
+      - Application__EnablePerformanceMetrics=true
+      - Application__MaxJsonSizeBytes=10485760
+      
+      # Logging Configuration
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__JSON_Whisperer=Information
+      - Logging__File__Enabled=true
+      - Logging__File__Path=/app/logs/json-whisperer.log
+      
+      # Performance Configuration
+      - Performance__EnableTiming=true
+      - Performance__EnableMemoryTracking=true
+      - Performance__WarnOnSlowOperationsMs=5000
+    volumes:
+      - ./logs:/app/logs
+      - ./AppData:/app/AppData
+      - json_whisperer_cache:/app/cache
+    networks:
+      - json-whisperer-network
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "dotnet", "JSON-Whisperer.dll", "--health-check"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # Model Initialization Service (runs once to download models)
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: json-whisperer-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./scripts:/scripts:ro
+    networks:
+      - json-whisperer-network
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...' &&
+        sleep 10 &&
+        echo 'Pulling Mistral model...' &&
+        ollama --host http://ollama:11434 pull mistral &&
+        echo 'Pulling nomic-embed-text model...' &&
+        ollama --host http://ollama:11434 pull nomic-embed-text &&
+        echo 'Models downloaded successfully!' &&
+        ollama --host http://ollama:11434 list
+      "
+    restart: "no"
+
+  # Optional: Monitoring with Prometheus (uncomment if needed)
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: json-whisperer-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus_data:/prometheus
+  #   networks:
+  #     - json-whisperer-network
+  #   restart: unless-stopped
+
+  # Optional: Grafana for visualization (uncomment if needed)
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: json-whisperer-grafana
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #     - ./monitoring/grafana:/etc/grafana/provisioning:ro
+  #   networks:
+  #     - json-whisperer-network
+  #   restart: unless-stopped
+
+networks:
+  json-whisperer-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  scylla_data:
+    driver: local
+  ollama_data:
+    driver: local
+  json_whisperer_cache:
+    driver: local
+  # prometheus_data:
+  #   driver: local
+  # grafana_data:
+  #   driver: local

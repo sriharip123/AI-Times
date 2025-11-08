@@ -1,0 +1,96 @@
+[
+  {
+    "explain": "A suppression with ID a775949f-fc2f-42ae-a3f0-2215e25b0139 was initiated by user srih0527 to temporarily exclude device 1024901, which is linked to customer account 5425, from alerting. The suppression is titled 'test 1 device suppression' and includes the description 'test 1 device suppression description'. It is scheduled to begin on September 4, 2025 at 11:30 PM CT and will conclude on September 4, 2025 at 11:59 PM CT. This action ensures that alerts from the specified device are suppressed during the designated window, likely to support planned maintenance or testing activities."
+  },
+  {
+    "ID": "a775949f-fc2f-42ae-a3f0-2215e25b0139",
+    "Description": "test 1 device suppression description",
+    "Start": "2025-09-04T23:30:00",
+    "End": "2025-09-04T23:59:00",
+    "StartDateUTC": "2025-09-05T04:30:00Z",
+    "EndDateUTC": "2025-09-05T04:59:00Z",
+    "TimeZoneID": "Central Standard Time",
+    "TimeZoneDisplayName": "(UTC-06:00) Central Time (US & Canada)",
+    "Parameters": [
+      {
+        "Name": "Mapping 1",
+        "Mapping": {
+          "Cache": [
+            "core.rackspace.com:py:core:#:device:1024901"
+          ]
+        }
+      }
+    ],
+    "Events": {
+      "Create": [
+        "{\"name\":\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Create_hybrid:5425\",\"task\":\"api_management\",\"call_back\":true,\"tags\":[\"a775949f-fc2f-42ae-a3f0-2215e25b0139\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Create\",\"hybrid:5425\"],\"schedule\":{\"schedule_type\":\"interval\",\"every\":60,\"period\":\"seconds\"},\"run_once\":true,\"args\":[\"$[ApplicationConfig.SI.Modules.AricProcess.EventReposeURL]\",\"POST\",\"{\\\"content-type\\\":\\\"application/json\\\",\\\"Accept\\\":\\\"application/json\\\",\\\"x-auth-token\\\":\\\"$[ApplicationConfig.globalauth.2.0.us.session]\\\"}\",\"{\\\"Tenant\\\":\\\"hybrid:5425\\\",\\\"Name\\\":\\\"Suppression UI - Spinoff Events\\\",\\\"Source\\\":\\\"Device Lifecycle\\\",\\\"Classification\\\":[\\\"Maintenance\\\",\\\"Suppression UI\\\"],\\\"targets\\\":[{\\\"rel\\\":\\\"schemas.automation.rackspacecloud.com:targets:account:core.rackspace.com\\\",\\\"href\\\":\\\"core.rackspace.com:py:core:#:account:5425\\\"}],\\\"Metadata\\\":{\\\"ControlID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139\\\",\\\"DisableCustomerCommunication\\\":false,\\\"accounts\\\":\\\"\\\",\\\"AccountID\\\":\\\"5425\\\",\\\"deviceIDArray\\\":[\\\"1024901\\\"],\\\"deviceCSV\\\":\\\"1024901\\\",\\\"isSimple\\\":true,\\\"eventType\\\":\\\"Create\\\",\\\"title\\\":\\\"test 1 device suppression\\\",\\\"description\\\":\\\"test 1 device suppression description\\\",\\\"starttime\\\":\\\"23:30:00 (Central Standard Time)\\\",\\\"startdate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"endtime\\\":\\\"23:59:00 (Central Standard Time)\\\",\\\"enddate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"userid\\\":\\\"srih0527\\\",\\\"username\\\":\\\"Sri Hari.P\\\",\\\"recurringSuppression\\\":false,\\\"Schedule\\\":\\\"One time - 2025-09-04 23:30:00 (Central Standard Time) to 2025-09-04 23:59:00 (Central Standard Time)\\\",\\\"ComplexType\\\":\\\"Account : hybrid:5425;Devices : 1024901;\\\"},\\\"Automation\\\":{},\\\"Stream\\\":{\\\"ID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139_5425\\\"}}\"],\"enabled\":true,\"description\":\"Suppression Create Event \\nControl ID : a775949f-fc2f-42ae-a3f0-2215e25b0139 \\nEnvironment: staging \\nSystemType : stage-a\"}"
+      ],
+      "PreStart": [],
+      "Start": [
+        "{\"name\":\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Start_hybrid:5425\",\"task\":\"api_management\",\"call_back\":true,\"tags\":[\"a775949f-fc2f-42ae-a3f0-2215e25b0139\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Start\",\"hybrid:5425\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Upsert\"],\"schedule\":{\"schedule_type\":\"interval\",\"every\":558,\"period\":\"seconds\"},\"run_once\":true,\"args\":[\"$[ApplicationConfig.SI.Modules.AricProcess.EventReposeURL]\",\"POST\",\"{\\\"content-type\\\":\\\"application/json\\\",\\\"Accept\\\":\\\"application/json\\\",\\\"x-auth-token\\\":\\\"$[ApplicationConfig.globalauth.2.0.us.session]\\\"}\",\"{\\\"Tenant\\\":\\\"hybrid:5425\\\",\\\"Name\\\":\\\"Suppression UI - Spinoff Events\\\",\\\"Source\\\":\\\"Device Lifecycle\\\",\\\"Classification\\\":[\\\"Maintenance\\\",\\\"Suppression UI\\\"],\\\"targets\\\":[{\\\"rel\\\":\\\"schemas.automation.rackspacecloud.com:targets:account:core.rackspace.com\\\",\\\"href\\\":\\\"core.rackspace.com:py:core:#:account:5425\\\"}],\\\"Metadata\\\":{\\\"ControlID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139\\\",\\\"DisableCustomerCommunication\\\":false,\\\"accounts\\\":\\\"\\\",\\\"AccountID\\\":\\\"5425\\\",\\\"deviceIDArray\\\":[\\\"1024901\\\"],\\\"deviceCSV\\\":\\\"1024901\\\",\\\"isSimple\\\":true,\\\"eventType\\\":\\\"Start\\\",\\\"title\\\":\\\"test 1 device suppression\\\",\\\"description\\\":\\\"test 1 device suppression description\\\",\\\"starttime\\\":\\\"23:30:00 (Central Standard Time)\\\",\\\"startdate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"endtime\\\":\\\"23:59:00 (Central Standard Time)\\\",\\\"enddate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"userid\\\":\\\"srih0527\\\",\\\"username\\\":\\\"Sri Hari.P\\\",\\\"recurringSuppression\\\":false,\\\"Schedule\\\":\\\"One time - 2025-09-04 23:30:00 (Central Standard Time) to 2025-09-04 23:59:00 (Central Standard Time)\\\",\\\"ComplexType\\\":\\\"Account : hybrid:5425;Devices : 1024901;\\\"},\\\"Automation\\\":{},\\\"Stream\\\":{\\\"ID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139_5425\\\"}}\"],\"enabled\":true,\"description\":\"Suppression Create Event \\nControl ID : a775949f-fc2f-42ae-a3f0-2215e25b0139 \\nEnvironment: staging \\nSystemType : stage-a\"}"
+      ],
+      "Update": [
+        "{\"name\":\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Update_hybrid:5425\",\"task\":\"api_management\",\"call_back\":true,\"tags\":[\"a775949f-fc2f-42ae-a3f0-2215e25b0139\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Update\",\"hybrid:5425\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Upsert\"],\"schedule\":{\"schedule_type\":\"interval\",\"every\":60,\"period\":\"seconds\"},\"run_once\":true,\"args\":[\"$[ApplicationConfig.SI.Modules.AricProcess.EventReposeURL]\",\"POST\",\"{\\\"content-type\\\":\\\"application/json\\\",\\\"Accept\\\":\\\"application/json\\\",\\\"x-auth-token\\\":\\\"$[ApplicationConfig.globalauth.2.0.us.session]\\\"}\",\"{\\\"Tenant\\\":\\\"hybrid:5425\\\",\\\"Name\\\":\\\"Suppression UI - Spinoff Events\\\",\\\"Source\\\":\\\"Device Lifecycle\\\",\\\"Classification\\\":[\\\"Maintenance\\\",\\\"Suppression UI\\\"],\\\"targets\\\":[{\\\"rel\\\":\\\"schemas.automation.rackspacecloud.com:targets:account:core.rackspace.com\\\",\\\"href\\\":\\\"core.rackspace.com:py:core:#:account:5425\\\"}],\\\"Metadata\\\":{\\\"ControlID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139\\\",\\\"DisableCustomerCommunication\\\":false,\\\"accounts\\\":\\\"\\\",\\\"AccountID\\\":\\\"5425\\\",\\\"deviceIDArray\\\":[\\\"1024901\\\"],\\\"deviceCSV\\\":\\\"1024901\\\",\\\"isSimple\\\":true,\\\"eventType\\\":\\\"Update\\\",\\\"title\\\":\\\"test 1 device suppression\\\",\\\"description\\\":\\\"test 1 device suppression description\\\",\\\"starttime\\\":\\\"23:30:00 (Central Standard Time)\\\",\\\"startdate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"endtime\\\":\\\"23:59:00 (Central Standard Time)\\\",\\\"enddate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"userid\\\":\\\"srih0527\\\",\\\"username\\\":\\\"Sri Hari.P\\\",\\\"recurringSuppression\\\":false,\\\"Schedule\\\":\\\"One time - 2025-09-04 23:30:00 (Central Standard Time) to 2025-09-04 23:59:00 (Central Standard Time)\\\",\\\"ComplexType\\\":\\\"Account : hybrid:5425;Devices : 1024901;\\\"},\\\"Automation\\\":{},\\\"Stream\\\":{\\\"ID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139_5425\\\"}}\"],\"enabled\":true,\"description\":\"Suppression Create Event \\nControl ID : a775949f-fc2f-42ae-a3f0-2215e25b0139 \\nEnvironment: staging \\nSystemType : stage-a\"}"
+      ],
+      "Cancel": [
+        "{\"name\":\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Cancel_hybrid:5425\",\"task\":\"api_management\",\"call_back\":true,\"tags\":[\"a775949f-fc2f-42ae-a3f0-2215e25b0139\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Cancel\",\"hybrid:5425\"],\"schedule\":{\"schedule_type\":\"interval\",\"every\":60,\"period\":\"seconds\"},\"run_once\":true,\"args\":[\"$[ApplicationConfig.SI.Modules.AricProcess.EventReposeURL]\",\"POST\",\"{\\\"content-type\\\":\\\"application/json\\\",\\\"Accept\\\":\\\"application/json\\\",\\\"x-auth-token\\\":\\\"$[ApplicationConfig.globalauth.2.0.us.session]\\\"}\",\"{\\\"Tenant\\\":\\\"hybrid:5425\\\",\\\"Name\\\":\\\"Suppression UI - Spinoff Events\\\",\\\"Source\\\":\\\"Device Lifecycle\\\",\\\"Classification\\\":[\\\"Maintenance\\\",\\\"Suppression UI\\\"],\\\"targets\\\":[{\\\"rel\\\":\\\"schemas.automation.rackspacecloud.com:targets:account:core.rackspace.com\\\",\\\"href\\\":\\\"core.rackspace.com:py:core:#:account:5425\\\"}],\\\"Metadata\\\":{\\\"ControlID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139\\\",\\\"DisableCustomerCommunication\\\":false,\\\"ReinjectActiveAlerts\\\":true,\\\"accounts\\\":\\\"\\\",\\\"AccountID\\\":\\\"5425\\\",\\\"deviceIDArray\\\":[\\\"1024901\\\"],\\\"deviceCSV\\\":\\\"1024901\\\",\\\"isSimple\\\":true,\\\"eventType\\\":\\\"Cancel\\\",\\\"title\\\":\\\"test 1 device suppression\\\",\\\"description\\\":\\\"test 1 device suppression description\\\",\\\"starttime\\\":\\\"23:30:00 (Central Standard Time)\\\",\\\"startdate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"endtime\\\":\\\"23:59:00 (Central Standard Time)\\\",\\\"enddate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"userid\\\":\\\"srih0527\\\",\\\"username\\\":\\\"Sri Hari.P\\\",\\\"recurringSuppression\\\":false,\\\"Schedule\\\":\\\"One time - 2025-09-04 23:30:00 (Central Standard Time) to 2025-09-04 23:59:00 (Central Standard Time)\\\",\\\"ComplexType\\\":\\\"Account : hybrid:5425;Devices : 1024901;\\\"},\\\"Automation\\\":{},\\\"Stream\\\":{\\\"ID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139_5425\\\"}}\"],\"enabled\":true,\"description\":\"Suppression Create Event \\nControl ID : a775949f-fc2f-42ae-a3f0-2215e25b0139 \\nEnvironment: staging \\nSystemType : stage-a\"}"
+      ],
+      "End": [
+        "{\"name\":\"a775949f-fc2f-42ae-a3f0-2215e25b0139_End_hybrid:5425\",\"task\":\"api_management\",\"call_back\":true,\"tags\":[\"a775949f-fc2f-42ae-a3f0-2215e25b0139\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_End\",\"hybrid:5425\",\"a775949f-fc2f-42ae-a3f0-2215e25b0139_Upsert\"],\"schedule\":{\"schedule_type\":\"interval\",\"every\":2298,\"period\":\"seconds\"},\"run_once\":true,\"args\":[\"$[ApplicationConfig.SI.Modules.AricProcess.EventReposeURL]\",\"POST\",\"{\\\"content-type\\\":\\\"application/json\\\",\\\"Accept\\\":\\\"application/json\\\",\\\"x-auth-token\\\":\\\"$[ApplicationConfig.globalauth.2.0.us.session]\\\"}\",\"{\\\"Tenant\\\":\\\"hybrid:5425\\\",\\\"Name\\\":\\\"Suppression UI - Spinoff Events\\\",\\\"Source\\\":\\\"Device Lifecycle\\\",\\\"Classification\\\":[\\\"Maintenance\\\",\\\"Suppression UI\\\"],\\\"targets\\\":[{\\\"rel\\\":\\\"schemas.automation.rackspacecloud.com:targets:account:core.rackspace.com\\\",\\\"href\\\":\\\"core.rackspace.com:py:core:#:account:5425\\\"}],\\\"Metadata\\\":{\\\"ControlID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139\\\",\\\"DisableCustomerCommunication\\\":false,\\\"ReinjectActiveAlerts\\\":true,\\\"accounts\\\":\\\"\\\",\\\"AccountID\\\":\\\"5425\\\",\\\"deviceIDArray\\\":[\\\"1024901\\\"],\\\"deviceCSV\\\":\\\"1024901\\\",\\\"isSimple\\\":true,\\\"eventType\\\":\\\"End\\\",\\\"title\\\":\\\"test 1 device suppression\\\",\\\"description\\\":\\\"test 1 device suppression description\\\",\\\"starttime\\\":\\\"23:30:00 (Central Standard Time)\\\",\\\"startdate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"endtime\\\":\\\"23:59:00 (Central Standard Time)\\\",\\\"enddate\\\":\\\"09/04/2025 (Central Standard Time)\\\",\\\"userid\\\":\\\"srih0527\\\",\\\"username\\\":\\\"Sri Hari.P\\\",\\\"recurringSuppression\\\":false,\\\"Schedule\\\":\\\"One time - 2025-09-04 23:30:00 (Central Standard Time) to 2025-09-04 23:59:00 (Central Standard Time)\\\",\\\"ComplexType\\\":\\\"Account : hybrid:5425;Devices : 1024901;\\\"},\\\"Automation\\\":{},\\\"Stream\\\":{\\\"ID\\\":\\\"a775949f-fc2f-42ae-a3f0-2215e25b0139_5425\\\"}}\"],\"enabled\":true,\"description\":\"Suppression Create Event \\nControl ID : a775949f-fc2f-42ae-a3f0-2215e25b0139 \\nEnvironment: staging \\nSystemType : stage-a\"}"
+      ]
+    },
+    "Enabled": true,
+    "Operations": [
+      {
+        "ApplicationOrOperationName": "eventprocessing.suppression",
+        "Operations": "FILTER",
+        "Args": {
+          "": ""
+        }
+      }
+    ],
+    "Schedule": [],
+    "LastModifiedDate": "2025-09-05T04:21:01.7367906Z",
+    "LastModifiedBy": "srih0527",
+    "Tenant": "internal",
+    "Name": "test 1 device suppression",
+    "Permissions": {
+      "InternalIdentity": {
+        "AllowedAccess": {
+          "Owner": {
+            "Users": [
+              {
+                "Tenant": "internal",
+                "UserName": "srih0527"
+              }
+            ],
+            "Roles": [
+              "RBASupport",
+              "ASOPS"
+            ]
+          },
+          "Write": {
+            "Users": [],
+            "Roles": [
+              "AllUsers"
+            ]
+          }
+        }
+      },
+      "GlobalAuth2US": {
+        "AllowedAccess": {
+          "Owner": {
+            "Users": [
+              {
+                "Tenant": "admin",
+                "UserName": "businessautomation"
+              }
+            ],
+            "Roles": []
+          }
+        }
+      }
+    },
+    "Environment": "staging"
+  }
+]

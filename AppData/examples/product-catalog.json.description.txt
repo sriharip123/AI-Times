@@ -1,0 +1,1 @@
+E-commerce product catalog with detailed product information including pricing, categories, and technical specifications.

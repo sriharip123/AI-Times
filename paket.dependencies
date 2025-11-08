@@ -1,0 +1,17 @@
+source https://api.nuget.org/v3/index.json
+source https://nuget.pkg.github.com/rax-rba/index.json
+
+framework: auto-detect
+
+nuget Microsoft.Extensions.DependencyInjection
+nuget Microsoft.Extensions.Configuration
+nuget Microsoft.Extensions.Configuration.Json
+nuget Microsoft.Extensions.Configuration.EnvironmentVariables
+nuget Microsoft.Extensions.Logging
+nuget Microsoft.Extensions.Logging.Console
+nuget Microsoft.Extensions.Http
+nuget Microsoft.Extensions.Options.ConfigurationExtensions
+nuget CassandraCSharpDriver
+nuget NUnit
+nuget NUnit3TestAdapter
+nuget Microsoft.NET.Test.Sdk 

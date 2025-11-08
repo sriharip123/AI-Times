@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/Microsoft.Testing.Extensions.TrxReport.Abstractions.nuspec" Id="RCE47EA3737BD74C8" />
+  <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/362573a7c6ba486881a4ece0fdf3aa14.psmdcp" Id="RA346E4AC2A8E1C5F" />
+</Relationships>
