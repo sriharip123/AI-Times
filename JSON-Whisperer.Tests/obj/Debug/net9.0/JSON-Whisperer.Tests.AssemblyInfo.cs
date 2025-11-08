@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JSON-Whisperer.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2fa34e41516994fba5da2aa5507c8109378ee7dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("JSON-Whisperer.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JSON-Whisperer.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

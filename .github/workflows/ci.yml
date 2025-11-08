@@ -29,6 +29,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
+      - name: Restore .NET tools
+        run: dotnet tool restore
+      
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -81,6 +84,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore .NET tools
+        run: dotnet tool restore
       
       - name: Restore dependencies
         run: dotnet restore

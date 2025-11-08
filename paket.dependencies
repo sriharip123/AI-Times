@@ -1,5 +1,4 @@
 source https://api.nuget.org/v3/index.json
-source https://nuget.pkg.github.com/rax-rba/index.json
 
 framework: auto-detect
 

@@ -14,11 +14,12 @@ A simple workflow that runs all tests on every push to main and on pull requests
 **Steps:**
 1. Checkout code
 2. Setup .NET 9.0
-3. Restore dependencies
-4. Build solution
-5. Run all tests
-6. Publish test results
-7. Upload test artifacts
+3. Restore .NET tools (Paket, coverage tools)
+4. Restore dependencies
+5. Build solution
+6. Run all tests
+7. Publish test results
+8. Upload test artifacts
 
 ### 2. CI Pipeline (`ci.yml`)
 A comprehensive CI pipeline with build, test, and code quality checks.
@@ -63,6 +64,9 @@ Add these badges to your README.md to show build status:
 Before pushing, you can run the same checks locally:
 
 ```bash
+# Restore .NET tools (Paket, etc.)
+dotnet tool restore
+
 # Restore and build
 dotnet restore
 dotnet build --configuration Release

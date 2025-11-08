@@ -204,3 +204,4 @@ C:\rackspace\Learn\AI-Times\JSON-Whisperer.Tests\bin\Debug\net9.0\Microsoft.Exte
 C:\rackspace\Learn\AI-Times\JSON-Whisperer.Tests\bin\Debug\net9.0\Microsoft.Extensions.Logging.Console.dll
 C:\rackspace\Learn\AI-Times\JSON-Whisperer.Tests\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
 C:\rackspace\Learn\AI-Times\JSON-Whisperer.Tests\bin\Debug\net9.0\appsettings.json
+C:\rackspace\Learn\AI-Times\JSON-Whisperer.Tests\obj\Debug\net9.0\JSON-Whisperer.Tests.sourcelink.json

@@ -25,6 +25,9 @@ git checkout -b feature/your-feature-name
 Before pushing, ensure all tests pass:
 
 ```bash
+# Restore .NET tools (Paket, coverage tools)
+dotnet tool restore
+
 # Restore dependencies
 dotnet restore
 
