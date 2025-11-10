@@ -17,6 +17,10 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     
     steps:
       - name: Checkout code
@@ -51,12 +55,13 @@ jobs:
       
       - name: Publish test results
         uses: dorny/test-reporter@v1
-        if: always()
+        if: success() || failure()
         with:
           name: Test Results
           path: '**/test-results.trx'
           reporter: dotnet-trx
           fail-on-error: true
+        continue-on-error: true
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
