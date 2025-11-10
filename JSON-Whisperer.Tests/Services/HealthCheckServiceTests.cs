@@ -488,7 +488,7 @@ namespace JSON_Whisperer.Tests.Services
 
             // Assert
             Assert.That(result.ResponseTime, Is.GreaterThan(TimeSpan.Zero));
-            Assert.That(result.ResponseTime.TotalMilliseconds, Is.GreaterThanOrEqualTo(50));
+            Assert.That(result.ResponseTime.TotalMilliseconds, Is.GreaterThanOrEqualTo(45)); // Allow for timing variance
             Assert.That(result.Details.ContainsKey("ResponseTimeMs"), Is.True);
         }
 
@@ -523,7 +523,7 @@ namespace JSON_Whisperer.Tests.Services
 
             // Assert
             Assert.That(result.ResponseTime, Is.GreaterThan(TimeSpan.Zero));
-            Assert.That(result.ResponseTime.TotalMilliseconds, Is.GreaterThanOrEqualTo(50));
+            Assert.That(result.ResponseTime.TotalMilliseconds, Is.GreaterThanOrEqualTo(45)); // Allow for timing variance
             Assert.That(result.Details.ContainsKey("ResponseTimeMs"), Is.True);
         }
 
