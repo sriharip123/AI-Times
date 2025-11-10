@@ -477,6 +477,18 @@ spec:
             - "dotnet JSON-Whisperer.dll --health-check"
           initialDelaySeconds: 30
           periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "dotnet JSON-Whisperer.dll --health-check"
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
@@ -719,17 +731,73 @@ export OLLAMA_BASE_URL=http://ollama-prod:11434
 
 ### 2. Configuration Validation
 
-Add health check endpoint to validate configuration:
+Use diagnostic commands to validate configuration before deployment:
 
 ```bash
-# Check configuration validity
+# Validate all configuration settings
 dotnet JSON-Whisperer.dll --validate-config
 
-# Check Ollama connectivity
-dotnet JSON-Whisperer.dll --check-ollama
+# Test individual services
+dotnet JSON-Whisperer.dll --test-ollama      # Test Ollama connectivity and models
+dotnet JSON-Whisperer.dll --test-scylla      # Test ScyllaDB connectivity
+dotnet JSON-Whisperer.dll --test-embedding   # Test embedding generation
 
-# Full health check
+# Comprehensive health check (all services)
 dotnet JSON-Whisperer.dll --health-check
+```
+
+**Exit Codes for Automation:**
+- Exit code 0: Configuration valid / Service healthy
+- Exit code 1: Configuration invalid / Service unhealthy
+
+**Pre-Deployment Validation Script:**
+```bash
+#!/bin/bash
+# validate-deployment.sh
+
+echo "=== Pre-Deployment Validation ==="
+
+# Step 1: Validate configuration
+echo "Validating configuration..."
+if ! dotnet JSON-Whisperer.dll --validate-config; then
+  echo "❌ Configuration validation failed"
+  exit 1
+fi
+echo "✓ Configuration valid"
+
+# Step 2: Test Ollama service
+echo "Testing Ollama service..."
+if ! dotnet JSON-Whisperer.dll --test-ollama; then
+  echo "❌ Ollama service test failed"
+  exit 1
+fi
+echo "✓ Ollama service healthy"
+
+# Step 3: Test ScyllaDB
+echo "Testing ScyllaDB..."
+if ! dotnet JSON-Whisperer.dll --test-scylla; then
+  echo "❌ ScyllaDB test failed"
+  exit 1
+fi
+echo "✓ ScyllaDB healthy"
+
+# Step 4: Validate knowledge base
+echo "Validating knowledge base..."
+if ! dotnet JSON-Whisperer.dll --validate-knowledge-base; then
+  echo "⚠️  Knowledge base validation failed (non-critical)"
+fi
+
+# Step 5: Run comprehensive health check
+echo "Running comprehensive health check..."
+if ! dotnet JSON-Whisperer.dll --health-check; then
+  echo "❌ Health check failed"
+  exit 1
+fi
+echo "✓ All services healthy"
+
+echo "=== Validation Complete ==="
+echo "✓ Deployment validation passed"
+exit 0
 ```
 
 ### 3. Secrets Management
@@ -744,6 +812,346 @@ az keyvault secret set --vault-name "json-whisperer-kv" --name "OllamaApiKey" --
 ```bash
 # Store secrets in AWS Secrets Manager
 aws secretsmanager create-secret --name "json-whisperer/ollama" --secret-string '{"apiKey":"your-api-key"}'
+```
+
+## Health Checks and Monitoring
+
+### 1. Health Check Integration
+
+The application provides comprehensive health check commands that can be integrated into deployment pipelines, monitoring systems, and container orchestration platforms.
+
+#### Health Check Command
+
+```bash
+# Run comprehensive health check
+dotnet JSON-Whisperer.dll --health-check
+```
+
+**What It Checks:**
+- Ollama service connectivity and model availability
+- ScyllaDB connectivity and keyspace verification
+- Embedding service functionality
+- Knowledge base initialization status
+
+**Exit Codes:**
+- 0: All services healthy
+- 1: One or more services unhealthy
+
+#### Docker Health Checks
+
+Add health checks to your Dockerfile:
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/runtime:9.0
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD dotnet JSON-Whisperer.dll --health-check || exit 1
+
+ENTRYPOINT ["dotnet", "JSON-Whisperer.dll"]
+```
+
+#### Docker Compose Health Checks
+
+```yaml
+services:
+  json-whisperer:
+    image: json-whisperer:latest
+    healthcheck:
+      test: ["CMD", "dotnet", "JSON-Whisperer.dll", "--health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      scylla:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+```
+
+#### Kubernetes Health Checks
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: json-whisperer
+spec:
+  template:
+    spec:
+      containers:
+      - name: json-whisperer
+        image: json-whisperer:latest
+        livenessProbe:
+          exec:
+            command:
+            - dotnet
+            - JSON-Whisperer.dll
+            - --health-check
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - dotnet
+            - JSON-Whisperer.dll
+            - --health-check
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+```
+
+#### Load Balancer Health Checks
+
+**HAProxy Configuration:**
+```
+backend json-whisperer
+    option httpchk GET /health
+    http-check expect status 200
+    server app1 10.0.0.1:8080 check inter 30s
+    server app2 10.0.0.2:8080 check inter 30s
+```
+
+**NGINX Configuration:**
+```nginx
+upstream json-whisperer {
+    server 10.0.0.1:8080 max_fails=3 fail_timeout=30s;
+    server 10.0.0.2:8080 max_fails=3 fail_timeout=30s;
+}
+
+location /health {
+    proxy_pass http://json-whisperer;
+    proxy_connect_timeout 5s;
+    proxy_read_timeout 10s;
+}
+```
+
+### 2. Monitoring Integration
+
+#### Prometheus Metrics
+
+Create a monitoring script that exposes health check status:
+
+```bash
+#!/bin/bash
+# health-check-exporter.sh
+
+while true; do
+  if dotnet JSON-Whisperer.dll --health-check > /dev/null 2>&1; then
+    echo "json_whisperer_health_status 1" > /var/lib/node_exporter/textfile_collector/json_whisperer.prom
+  else
+    echo "json_whisperer_health_status 0" > /var/lib/node_exporter/textfile_collector/json_whisperer.prom
+  fi
+  sleep 30
+done
+```
+
+#### Nagios/Icinga Check
+
+```bash
+#!/bin/bash
+# check_json_whisperer.sh
+
+if dotnet JSON-Whisperer.dll --health-check > /dev/null 2>&1; then
+  echo "OK - All services healthy"
+  exit 0
+else
+  echo "CRITICAL - Health check failed"
+  exit 2
+fi
+```
+
+#### Datadog Integration
+
+```bash
+#!/bin/bash
+# datadog-health-check.sh
+
+if dotnet JSON-Whisperer.dll --health-check; then
+  curl -X POST "https://api.datadoghq.com/api/v1/events" \
+    -H "DD-API-KEY: ${DD_API_KEY}" \
+    -d '{
+      "title": "JSON-Whisperer Health Check",
+      "text": "All services healthy",
+      "priority": "normal",
+      "tags": ["service:json-whisperer", "status:healthy"],
+      "alert_type": "success"
+    }'
+else
+  curl -X POST "https://api.datadoghq.com/api/v1/events" \
+    -H "DD-API-KEY: ${DD_API_KEY}" \
+    -d '{
+      "title": "JSON-Whisperer Health Check Failed",
+      "text": "One or more services unhealthy",
+      "priority": "normal",
+      "tags": ["service:json-whisperer", "status:unhealthy"],
+      "alert_type": "error"
+    }'
+fi
+```
+
+### 3. Automated Deployment Validation
+
+#### Pre-Deployment Checks
+
+```bash
+#!/bin/bash
+# pre-deploy-validation.sh
+
+set -e
+
+echo "=== Pre-Deployment Validation ==="
+
+# Validate configuration
+echo "Step 1: Validating configuration..."
+if ! dotnet JSON-Whisperer.dll --validate-config; then
+  echo "❌ Configuration validation failed"
+  exit 1
+fi
+echo "✓ Configuration valid"
+
+# Test Ollama
+echo "Step 2: Testing Ollama service..."
+if ! dotnet JSON-Whisperer.dll --test-ollama; then
+  echo "❌ Ollama test failed"
+  exit 1
+fi
+echo "✓ Ollama service healthy"
+
+# Test ScyllaDB
+echo "Step 3: Testing ScyllaDB..."
+if ! dotnet JSON-Whisperer.dll --test-scylla; then
+  echo "❌ ScyllaDB test failed"
+  exit 1
+fi
+echo "✓ ScyllaDB healthy"
+
+# Test embedding service
+echo "Step 4: Testing embedding service..."
+if ! dotnet JSON-Whisperer.dll --test-embedding; then
+  echo "❌ Embedding service test failed"
+  exit 1
+fi
+echo "✓ Embedding service healthy"
+
+# Validate knowledge base
+echo "Step 5: Validating knowledge base..."
+if ! dotnet JSON-Whisperer.dll --validate-knowledge-base; then
+  echo "⚠️  Knowledge base validation failed (non-critical)"
+fi
+
+# Run comprehensive health check
+echo "Step 6: Running comprehensive health check..."
+if ! dotnet JSON-Whisperer.dll --health-check; then
+  echo "❌ Health check failed"
+  exit 1
+fi
+echo "✓ All services healthy"
+
+echo "=== Validation Complete ==="
+echo "✓ All pre-deployment checks passed"
+exit 0
+```
+
+#### Post-Deployment Verification
+
+```bash
+#!/bin/bash
+# post-deploy-verification.sh
+
+set -e
+
+echo "=== Post-Deployment Verification ==="
+
+# Wait for services to start
+echo "Waiting for services to start..."
+sleep 30
+
+# Health check with retries
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Running health check..."
+  
+  if dotnet JSON-Whisperer.dll --health-check; then
+    echo "✓ Health check passed"
+    break
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+      echo "⚠️  Health check failed, retrying in 10 seconds..."
+      sleep 10
+    else
+      echo "❌ Health check failed after $MAX_RETRIES attempts"
+      exit 1
+    fi
+  fi
+done
+
+# Run benchmarks to establish baseline
+echo "Running performance benchmarks..."
+dotnet JSON-Whisperer.dll --benchmark-all > deployment-benchmark-$(date +%Y%m%d-%H%M%S).txt
+
+echo "=== Verification Complete ==="
+echo "✓ Deployment verified successfully"
+exit 0
+```
+
+### 4. Continuous Monitoring
+
+#### Cron-Based Monitoring
+
+```bash
+# Add to crontab: crontab -e
+# Run health check every 5 minutes
+*/5 * * * * /usr/local/bin/json-whisperer-health-check.sh
+
+# /usr/local/bin/json-whisperer-health-check.sh
+#!/bin/bash
+LOG_FILE="/var/log/json-whisperer-health.log"
+
+if ! dotnet JSON-Whisperer.dll --health-check >> "$LOG_FILE" 2>&1; then
+  echo "$(date): Health check failed" >> "$LOG_FILE"
+  # Send alert
+  echo "JSON-Whisperer health check failed" | mail -s "Alert: JSON-Whisperer Down" admin@example.com
+fi
+```
+
+#### Systemd Service with Health Monitoring
+
+```ini
+# /etc/systemd/system/json-whisperer-monitor.service
+[Unit]
+Description=JSON-Whisperer Health Monitor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/json-whisperer-monitor.sh
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# /usr/local/bin/json-whisperer-monitor.sh
+#!/bin/bash
+while true; do
+  if ! dotnet JSON-Whisperer.dll --health-check; then
+    logger -t json-whisperer "Health check failed"
+    systemctl restart json-whisperer
+  fi
+  sleep 300  # Check every 5 minutes
+done
 ```
 
 ## Monitoring and Logging
@@ -999,18 +1407,81 @@ curl http://ollama:11434/api/ps
 
 ### 2. Diagnostic Commands
 
+All diagnostic commands return exit code 0 on success and exit code 1 on failure.
+
 ```bash
-# Application diagnostics
-dotnet JSON-Whisperer.dll --diagnostics
+# System Health and Configuration
+dotnet JSON-Whisperer.dll --health-check              # Check all services
+dotnet JSON-Whisperer.dll --validate-config           # Validate configuration
 
-# Configuration validation
-dotnet JSON-Whisperer.dll --validate-config
+# Service-Specific Tests
+dotnet JSON-Whisperer.dll --test-ollama               # Test Ollama service
+dotnet JSON-Whisperer.dll --test-scylla               # Test ScyllaDB
+dotnet JSON-Whisperer.dll --test-embedding            # Test embedding generation
+dotnet JSON-Whisperer.dll --test-similarity           # Test similarity search
 
-# Network connectivity test
-dotnet JSON-Whisperer.dll --test-connection
+# Knowledge Base Management
+dotnet JSON-Whisperer.dll --validate-knowledge-base   # Validate JSON files
+dotnet JSON-Whisperer.dll --reinitialize-knowledge-base  # Regenerate embeddings
 
-# Performance benchmark
-dotnet JSON-Whisperer.dll --benchmark
+# Performance Benchmarks
+dotnet JSON-Whisperer.dll --benchmark-all             # Run all benchmarks
+dotnet JSON-Whisperer.dll --benchmark-similarity      # Benchmark similarity search
+dotnet JSON-Whisperer.dll --benchmark-vector-operations  # Benchmark vector ops
+dotnet JSON-Whisperer.dll --benchmark-embedding       # Benchmark embeddings
+```
+
+**Using Diagnostic Commands for Monitoring:**
+
+```bash
+# Health check monitoring script
+#!/bin/bash
+while true; do
+  if ! dotnet JSON-Whisperer.dll --health-check > /dev/null 2>&1; then
+    echo "$(date): Health check failed" | tee -a /var/log/json-whisperer-monitor.log
+    # Send alert (e.g., email, Slack, PagerDuty)
+    curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
+      -H 'Content-Type: application/json' \
+      -d '{"text":"JSON-Whisperer health check failed!"}'
+  fi
+  sleep 60
+done
+```
+
+**CI/CD Integration Examples:**
+
+```yaml
+# GitHub Actions
+name: Deploy JSON-Whisperer
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Configuration
+        run: dotnet JSON-Whisperer.dll --validate-config
+        
+      - name: Health Check
+        run: dotnet JSON-Whisperer.dll --health-check
+        
+      - name: Run Benchmarks
+        run: dotnet JSON-Whisperer.dll --benchmark-all
+
+# GitLab CI
+test:
+  script:
+    - dotnet JSON-Whisperer.dll --validate-config
+    - dotnet JSON-Whisperer.dll --health-check
+    - dotnet JSON-Whisperer.dll --test-ollama
+    - dotnet JSON-Whisperer.dll --test-scylla
+
+# Jenkins Pipeline
+stage('Validate') {
+  steps {
+    sh 'dotnet JSON-Whisperer.dll --validate-config'
+    sh 'dotnet JSON-Whisperer.dll --health-check'
+  }
+}
 ```
 
 ### 3. Log Analysis

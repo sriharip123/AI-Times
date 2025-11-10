@@ -292,6 +292,64 @@ namespace JSON_Whisperer.Services
         }
 
         /// <summary>
+        /// Deletes all embeddings from the database
+        /// </summary>
+        public async Task<int> DeleteAllEmbeddingsAsync()
+        {
+            if (!_isInitialized || _session == null)
+            {
+                return 0;
+            }
+
+            try
+            {
+                // Get count before deletion
+                var countBefore = await GetEmbeddingCountAsync();
+
+                // Truncate the table for efficient deletion
+                await _session.ExecuteAsync(new SimpleStatement("TRUNCATE embeddings"));
+
+                _logger.LogInformation("Deleted all {Count} embeddings from database", countBefore);
+                return (int)countBefore;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete all embeddings");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Gets all embedding IDs from the database
+        /// </summary>
+        public async Task<List<string>> GetAllEmbeddingIdsAsync()
+        {
+            if (!_isInitialized || _session == null)
+            {
+                return new List<string>();
+            }
+
+            try
+            {
+                var result = await _session.ExecuteAsync(new SimpleStatement("SELECT id FROM embeddings"));
+                var ids = new List<string>();
+
+                foreach (var row in result)
+                {
+                    ids.Add(row.GetValue<string>("id"));
+                }
+
+                _logger.LogDebug("Retrieved {Count} embedding IDs", ids.Count);
+                return ids;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get all embedding IDs");
+                return new List<string>();
+            }
+        }
+
+        /// <summary>
         /// Closes the database connection and cleans up resources
         /// </summary>
         public async Task DisposeAsync()

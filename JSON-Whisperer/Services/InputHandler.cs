@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using JSON_Whisperer.Interfaces;
+using JSON_Whisperer.Models;
 using Microsoft.Extensions.Logging;
 
 namespace JSON_Whisperer.Services
@@ -24,48 +25,54 @@ namespace JSON_Whisperer.Services
         }
 
         /// <summary>
-        /// Represents parsed command line arguments
+        /// Gets JSON input from command line arguments, file path, or stdin
         /// </summary>
-        private class ParsedArguments
+        /// <param name="args">Command line arguments (for backward compatibility)</param>
+        /// <returns>JSON content as string</returns>
+        [Obsolete("Use GetJsonInputAsync(CommandLineOptions) instead. This method is maintained for backward compatibility.")]
+        public async Task<string> GetJsonInputAsync(string[] args)
         {
-            public string? FilePath { get; set; }
-            public string? JsonContent { get; set; }
-            public bool VerboseMode { get; set; }
-            public bool HelpRequested { get; set; }
+            // For backward compatibility, parse arguments using the old logic
+            // This allows existing code to continue working
+            var parser = new CommandLineParser();
+            var options = parser.Parse(args);
+            return await GetJsonInputAsync(options);
         }
 
         /// <summary>
-        /// Gets JSON input from command line arguments, file path, or stdin
+        /// Gets JSON input from command line options, file path, or stdin
         /// </summary>
-        /// <param name="args">Command line arguments</param>
+        /// <param name="options">Parsed command line options</param>
         /// <returns>JSON content as string</returns>
-        public async Task<string> GetJsonInputAsync(string[] args)
+        public async Task<string> GetJsonInputAsync(CommandLineOptions options)
         {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
             try
             {
-                // Parse command line arguments
-                var parsedArgs = ParseCommandLineArguments(args);
-                
                 // Priority 1: --file flag with file path
-                if (!string.IsNullOrWhiteSpace(parsedArgs.FilePath))
+                if (!string.IsNullOrWhiteSpace(options.FilePath))
                 {
-                    _logger.LogInformation("Reading JSON from file: {FilePath}", parsedArgs.FilePath);
-                    return await ReadFromFileAsync(parsedArgs.FilePath);
+                    _logger.LogInformation("Reading JSON from file: {FilePath}", options.FilePath);
+                    return await ReadFromFileAsync(options.FilePath);
                 }
                 
-                // Priority 2: Direct JSON content as first argument
-                if (!string.IsNullOrWhiteSpace(parsedArgs.JsonContent))
+                // Priority 2: Direct JSON content from command line or already populated
+                if (!string.IsNullOrWhiteSpace(options.JsonContent))
                 {
                     // Check if it's a file path (for backward compatibility)
-                    if (IsFilePath(parsedArgs.JsonContent))
+                    if (IsFilePath(options.JsonContent))
                     {
-                        _logger.LogInformation("Reading JSON from file: {FilePath}", parsedArgs.JsonContent);
-                        return await ReadFromFileAsync(parsedArgs.JsonContent);
+                        _logger.LogInformation("Reading JSON from file: {FilePath}", options.JsonContent);
+                        return await ReadFromFileAsync(options.JsonContent);
                     }
                     
                     // Treat as direct JSON content
                     _logger.LogInformation("Using command line argument as JSON content");
-                    return parsedArgs.JsonContent;
+                    return options.JsonContent;
                 }
 
                 // Priority 3: Read from stdin with timeout
@@ -284,74 +291,7 @@ namespace JSON_Whisperer.Services
             }
         }
 
-        /// <summary>
-        /// Parses command line arguments to extract flags and values
-        /// </summary>
-        /// <param name="args">Command line arguments</param>
-        /// <returns>Parsed arguments structure</returns>
-        private ParsedArguments ParseCommandLineArguments(string[] args)
-        {
-            var result = new ParsedArguments();
-            
-            if (args == null || args.Length == 0)
-            {
-                return result;
-            }
 
-            for (int i = 0; i < args.Length; i++)
-            {
-                var arg = args[i]?.Trim();
-                if (string.IsNullOrEmpty(arg))
-                    continue;
-
-                switch (arg.ToLowerInvariant())
-                {
-                    case "--file":
-                    case "-f":
-                        // Next argument should be the file path
-                        if (i + 1 < args.Length && !string.IsNullOrWhiteSpace(args[i + 1]))
-                        {
-                            result.FilePath = args[i + 1].Trim();
-                            i++; // Skip the next argument since we consumed it
-                            _logger.LogDebug("Parsed --file argument: {FilePath}", result.FilePath);
-                        }
-                        else
-                        {
-                            throw new ArgumentException("--file flag requires a file path argument");
-                        }
-                        break;
-
-                    case "--verbose":
-                    case "-v":
-                        result.VerboseMode = true;
-                        _logger.LogDebug("Verbose mode enabled via command line");
-                        break;
-
-                    case "--help":
-                    case "-h":
-                    case "/?":
-                        result.HelpRequested = true;
-                        _logger.LogDebug("Help requested via command line");
-                        break;
-
-                    default:
-                        // If it doesn't start with a dash, treat it as JSON content
-                        if (!arg.StartsWith("-") && string.IsNullOrEmpty(result.JsonContent))
-                        {
-                            result.JsonContent = arg;
-                            _logger.LogDebug("Parsed JSON content argument (length: {Length})", arg.Length);
-                        }
-                        else if (arg.StartsWith("-"))
-                        {
-                            _logger.LogWarning("Unknown command line flag: {Flag}", arg);
-                            throw new ArgumentException($"Unknown command line flag: {arg}");
-                        }
-                        break;
-                }
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Reads JSON content from stdin with timeout

@@ -60,6 +60,18 @@ namespace JSON_Whisperer.Interfaces
         Task<bool> DeleteEmbeddingAsync(string id);
 
         /// <summary>
+        /// Deletes all embeddings from the database
+        /// </summary>
+        /// <returns>Number of embeddings deleted</returns>
+        Task<int> DeleteAllEmbeddingsAsync();
+
+        /// <summary>
+        /// Gets all embedding IDs from the database
+        /// </summary>
+        /// <returns>List of embedding IDs</returns>
+        Task<List<string>> GetAllEmbeddingIdsAsync();
+
+        /// <summary>
         /// Closes the database connection and cleans up resources
         /// </summary>
         Task DisposeAsync();

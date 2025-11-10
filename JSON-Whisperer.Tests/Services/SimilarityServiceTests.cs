@@ -330,6 +330,18 @@ namespace JSON_Whisperer.Tests.Services
 
         public Task<bool> DeleteEmbeddingAsync(string id) => Task.FromResult(true);
 
+        public Task<int> DeleteAllEmbeddingsAsync()
+        {
+            var count = StoredEmbeddings.Count;
+            StoredEmbeddings.Clear();
+            return Task.FromResult(count);
+        }
+
+        public Task<List<string>> GetAllEmbeddingIdsAsync()
+        {
+            return Task.FromResult(StoredEmbeddings.Select(e => e.Id).ToList());
+        }
+
         public Task DisposeAsync() => Task.CompletedTask;
     }
 }

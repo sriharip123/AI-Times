@@ -6,8 +6,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ### 1. Fork and Clone
 ```bash
-git clone https://github.com/YOUR_USERNAME/JSON-Whisperer.git
-cd JSON-Whisperer
+git clone https://github.com/sriharip123/AI-Times.git
+cd AI-Times
 ```
 
 ### 2. Create a Feature Branch
@@ -35,10 +35,10 @@ dotnet restore
 dotnet build --configuration Release
 
 # Run all tests
-dotnet test --configuration Release --verbosity normal
+dotnet test --no-build --configuration Release --verbosity normal
 ```
 
-All 129 tests should pass before submitting a PR.
+All 362 tests should pass before submitting a PR.
 
 ### 5. Commit Your Changes
 ```bash
@@ -65,8 +65,9 @@ Then create a pull request on GitHub targeting the `main` branch.
 
 1. **Automated Checks**: When you create a PR, GitHub Actions will automatically:
    - Build the solution
-   - Run all 129 tests
-   - Report test results
+   - Run all 362 tests
+   - Publish detailed test results
+   - Upload test artifacts
 
 2. **Review**: Wait for code review from maintainers
 
@@ -82,17 +83,17 @@ The test workflow runs automatically on:
 - Every pull request to `main` branch
 
 **What it does:**
-- ✅ Restores NuGet packages (with caching)
+- ✅ Restores NuGet packages (with caching for faster builds)
 - ✅ Builds the solution in Release mode
-- ✅ Runs all 129 tests
-- ✅ Publishes test results
-- ✅ Uploads test artifacts
+- ✅ Runs all 362 tests
+- ✅ Publishes detailed test results with pass/fail status
+- ✅ Uploads test artifacts (retained for 30 days)
 
 ### CI Pipeline
 The comprehensive CI pipeline includes:
-- Build and test job
-- Code quality checks
-- Security scanning (optional)
+- Build and test job with code coverage
+- Code quality checks (formatting validation)
+- Test result reporting and artifact management
 
 ## Testing Guidelines
 
@@ -137,6 +138,33 @@ dotnet test --filter "FullyQualifiedName~OllamaServiceTests"
 # Run a specific test
 dotnet test --filter "Name=IsAvailableAsync_InvalidUrl_ReturnsFalse"
 ```
+
+## Diagnostic Commands
+
+The application includes diagnostic commands for testing and troubleshooting. These are useful for verifying your development environment:
+
+```bash
+# Verify all services are operational
+dotnet run --project JSON-Whisperer -- --health-check
+
+# Validate configuration settings
+dotnet run --project JSON-Whisperer -- --validate-config
+
+# Test Ollama service connectivity
+dotnet run --project JSON-Whisperer -- --test-ollama
+
+# Test ScyllaDB connectivity
+dotnet run --project JSON-Whisperer -- --test-scylla
+
+# Test embedding generation
+dotnet run --project JSON-Whisperer -- --test-embeddings
+```
+
+**Exit Codes:**
+- `0` = Success/Healthy
+- `1` = Failure/Unhealthy
+
+For more details on diagnostic commands, see the [README.md](../README.md#diagnostic-commands).
 
 ## Code Style
 

@@ -17,18 +17,47 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
+// Parse command-line arguments before building service provider
+var commandLineParser = new CommandLineParser();
+var options = commandLineParser.Parse(args);
+
+// Validate command-line options
+if (!commandLineParser.IsValid(options, out string errorMessage))
+{
+    Console.Error.WriteLine($"ERROR: Invalid command-line arguments");
+    Console.Error.WriteLine(errorMessage);
+    Console.Error.WriteLine();
+    Console.Error.WriteLine("For help, run: dotnet JSON-Whisperer.dll --help");
+    return ExitCodes.ArgumentError;
+}
+
+// Handle help mode
+if (options.Mode == ExecutionMode.Help)
+{
+    var helpFormatter = new HelpFormatter();
+    helpFormatter.DisplayHelp();
+    return ExitCodes.Success;
+}
+
 // Setup dependency injection container
 var services = new ServiceCollection();
-ConfigureServices(services, configuration);
+ConfigureServices(services, configuration, options);
 
 // Build service provider
 using var serviceProvider = services.BuildServiceProvider();
 
 try
 {
-    // Get the main application service and run
+    // Route to diagnostic executor for diagnostic commands
+    if (options.Mode == ExecutionMode.Diagnostic && options.DiagnosticCommand.HasValue)
+    {
+        var diagnosticExecutor = serviceProvider.GetRequiredService<IDiagnosticCommandExecutor>();
+        return await diagnosticExecutor.ExecuteAsync(options.DiagnosticCommand.Value, options);
+    }
+
+    // Route to normal execution for JSON processing
     var app = serviceProvider.GetRequiredService<JsonWhispererApplication>();
-    return await app.RunAsync(args);
+    return await app.RunAsync(args, options);
 }
 catch (Exception ex)
 {
@@ -38,10 +67,10 @@ catch (Exception ex)
     var outputFormatter = serviceProvider.GetService<IOutputFormatter>();
     outputFormatter?.DisplayError($"Application error: {ex.Message}");
     
-    return 1;
+    return ExitCodes.GeneralError;
 }
 
-static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+static void ConfigureServices(IServiceCollection services, IConfiguration configuration, CommandLineOptions options)
         {
             // Configuration services
             services.AddSingleton<IConfiguration>(configuration);
@@ -53,14 +82,29 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
                 loggerFactory.CreateLogger<ConfigurationService>());
             var appSettings = configService.GetAppSettings();
 
+            // Apply command-line overrides to settings
+            if (options.VerboseMode)
+            {
+                appSettings.Application.VerboseMode = true;
+            }
+
             // Register settings as singleton
             services.AddSingleton(appSettings);
+
+            // Register command-line options as singleton
+            services.AddSingleton(options);
 
             // Logging configuration
             services.AddLogging(builder =>
             {
                 builder.AddConfiguration(configuration.GetSection("Logging"));
                 builder.AddConsole();
+                
+                // Override log level if verbose mode is enabled
+                if (options.VerboseMode)
+                {
+                    builder.SetMinimumLevel(LogLevel.Debug);
+                }
                 
                 // Add file logging if enabled
                 var fileLoggingEnabled = configuration.GetValue("Logging:File:Enabled", false);
@@ -93,14 +137,36 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
             services.AddScoped<IOutputFormatter, OutputFormatter>();
             
-            // Register vector services
-            services.AddSingleton<IVectorDatabaseService, ScyllaDbVectorService>();
-            services.AddScoped<ISimilarityService, SimilarityService>();
-            services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+            // Register vector services (conditionally skip if --no-similarity flag is set)
+            if (!options.NoSimilarity)
+            {
+                services.AddSingleton<IVectorDatabaseService, ScyllaDbVectorService>();
+                services.AddScoped<ISimilarityService, SimilarityService>();
+                services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+            }
+            else
+            {
+                // Register null/stub implementations when similarity is disabled
+                services.AddSingleton<IVectorDatabaseService>(sp => new NullVectorDatabaseService());
+                services.AddScoped<ISimilarityService>(sp => new NullSimilarityService());
+                services.AddScoped<IKnowledgeBaseService>(sp => new NullKnowledgeBaseService());
+            }
             
             // Register monitoring and diagnostic services
             services.AddSingleton<PerformanceMonitoringService>();
             services.AddSingleton<DiagnosticService>();
+            
+            // Register command-line parsing services
+            services.AddSingleton<ICommandLineParser, CommandLineParser>();
+            services.AddSingleton<IHelpFormatter, HelpFormatter>();
+            
+            // Register diagnostic command services
+            services.AddScoped<IDiagnosticCommandExecutor, DiagnosticCommandExecutor>();
+            services.AddScoped<IHealthCheckService, HealthCheckService>();
+            services.AddScoped<IConfigurationValidationService, ConfigurationValidationService>();
+            services.AddScoped<IServiceTestingService, ServiceTestingService>();
+            services.AddScoped<IKnowledgeBaseManagementService, KnowledgeBaseManagementService>();
+            services.AddScoped<IBenchmarkService, BenchmarkService>();
             
             // Register main application orchestrator
             services.AddScoped<JsonWhispererApplication>();
