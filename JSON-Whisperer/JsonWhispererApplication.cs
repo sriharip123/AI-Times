@@ -52,8 +52,9 @@ namespace JSON_Whisperer
         /// Main application entry point that orchestrates the entire workflow
         /// </summary>
         /// <param name="args">Command line arguments</param>
+        /// <param name="options">Parsed command-line options</param>
         /// <returns>Exit code (0 for success, 1 for error)</returns>
-        public async Task<int> RunAsync(string[] args)
+        public async Task<int> RunAsync(string[] args, CommandLineOptions options)
         {
             using var overallTimer = _performanceMonitoring.StartOperation("Application.RunAsync");
             
@@ -61,17 +62,31 @@ namespace JSON_Whisperer
             {
                 _logger.LogInformation("JSON-Whisperer application starting...");
                 
+                // Override VerboseMode setting if --verbose flag is present
+                bool verboseMode = _appSettings.Application.VerboseMode || options.VerboseMode;
+                
                 // Log diagnostic information if verbose mode is enabled
-                if (_appSettings.Application.VerboseMode)
+                if (verboseMode)
                 {
+                    if (options.VerboseMode)
+                    {
+                        _logger.LogInformation("Verbose mode enabled via --verbose flag (overriding configuration)");
+                    }
                     _diagnosticService.LogDiagnosticInfo();
                 }
 
                 // Record initial memory usage
                 _performanceMonitoring.RecordMemoryUsage("Application Start");
 
-                // Initialize vector database and knowledge base if enabled
-                await InitializeVectorServicesAsync();
+                // Initialize vector database and knowledge base if enabled (skip if --no-similarity flag is set)
+                if (!options.NoSimilarity)
+                {
+                    await InitializeVectorServicesAsync(options);
+                }
+                else
+                {
+                    _logger.LogInformation("Similarity matching disabled via --no-similarity flag. Skipping vector services initialization.");
+                }
 
                 // Step 1: Get JSON input
                 _logger.LogDebug("Getting JSON input from arguments or stdin");
@@ -80,7 +95,7 @@ namespace JSON_Whisperer
                 {
                     try
                     {
-                        jsonInput = await _inputHandler.GetJsonInputAsync(args);
+                        jsonInput = await _inputHandler.GetJsonInputAsync(options);
                         _logger.LogInformation("JSON input received, size: {Size} bytes", jsonInput.Length);
                     }
                     catch (Exception ex)
@@ -134,14 +149,14 @@ namespace JSON_Whisperer
                 // Record memory usage after analysis
                 _performanceMonitoring.RecordMemoryUsage("After JSON Analysis");
 
-                // Step 4: Perform similarity matching (if enabled)
+                // Step 4: Perform similarity matching (if enabled and not disabled via --no-similarity flag)
                 _logger.LogDebug("Performing similarity matching");
                 SimilarityResult? similarityResult = null;
                 using (var similarityTimer = _performanceMonitoring.StartOperation("SimilarityService.FindSimilar"))
                 {
                     try
                     {
-                        if (_appSettings.Vector.EnableSimilarityMatching && await _similarityService.IsAvailableAsync())
+                        if (!options.NoSimilarity && _appSettings.Vector.EnableSimilarityMatching && await _similarityService.IsAvailableAsync())
                         {
                             similarityResult = await _similarityService.FindSimilarJsonAsync(jsonInput);
                             _logger.LogInformation("Similarity matching completed. Found {MatchCount} matches with highest score {HighestScore:F3}", 
@@ -149,7 +164,14 @@ namespace JSON_Whisperer
                         }
                         else
                         {
-                            _logger.LogDebug("Similarity matching is disabled or unavailable");
+                            if (options.NoSimilarity)
+                            {
+                                _logger.LogDebug("Similarity matching skipped due to --no-similarity flag");
+                            }
+                            else
+                            {
+                                _logger.LogDebug("Similarity matching is disabled or unavailable");
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -220,8 +242,11 @@ namespace JSON_Whisperer
             {
                 _logger.LogError(ex, "Unhandled exception in application workflow");
                 
+                // Override VerboseMode setting if --verbose flag is present
+                bool verboseMode = _appSettings.Application.VerboseMode || options.VerboseMode;
+                
                 // Log diagnostic information on error
-                if (_appSettings.Application.VerboseMode)
+                if (verboseMode)
                 {
                     _logger.LogError("Collecting diagnostic information due to error...");
                     _diagnosticService.LogDiagnosticInfo();
@@ -235,8 +260,9 @@ namespace JSON_Whisperer
         /// <summary>
         /// Initializes vector database and knowledge base services with graceful fallback
         /// </summary>
+        /// <param name="options">Command-line options for verbose mode override</param>
         /// <returns>Task representing the initialization operation</returns>
-        private async Task InitializeVectorServicesAsync()
+        private async Task InitializeVectorServicesAsync(CommandLineOptions options)
         {
             // Skip initialization if similarity matching is disabled
             if (!_appSettings.Vector.EnableSimilarityMatching)
@@ -311,8 +337,11 @@ namespace JSON_Whisperer
                     "Vector services initialization failed. The application will continue without vector similarity features. " +
                     "Error: {ErrorMessage}", ex.Message);
 
+                // Override VerboseMode setting if --verbose flag is present
+                bool verboseMode = _appSettings.Application.VerboseMode || options.VerboseMode;
+
                 // Log additional diagnostic information in verbose mode
-                if (_appSettings.Application.VerboseMode)
+                if (verboseMode)
                 {
                     _logger.LogDebug("Vector services initialization failure details: {ExceptionDetails}", ex.ToString());
                 }

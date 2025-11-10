@@ -119,6 +119,9 @@ namespace JSON_Whisperer.Tests
             services.AddSingleton<PerformanceMonitoringService>();
             services.AddSingleton<DiagnosticService>();
 
+            // Register command-line parsing services
+            services.AddSingleton<ICommandLineParser, CommandLineParser>();
+
             if (enableSimilarity)
             {
                 // Register vector services with mock implementations for testing
@@ -144,12 +147,14 @@ namespace JSON_Whisperer.Tests
         {
             // Arrange
             var app = _serviceProvider.GetRequiredService<JsonWhispererApplication>();
+            var parser = _serviceProvider.GetRequiredService<ICommandLineParser>();
             var validJson = "{\"name\":\"test\",\"value\":123}";
             var args = new[] { validJson };
+            var options = parser.Parse(args);
 
             // Act & Assert
             // Note: This test may fail if Ollama is not running, which is expected behavior
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
             
             // The result should be either 0 (success) or 1 (Ollama not available)
             // Both are valid outcomes for this integration test
@@ -161,8 +166,10 @@ namespace JSON_Whisperer.Tests
         {
             // Arrange
             var app = _serviceProviderWithSimilarity.GetRequiredService<JsonWhispererApplication>();
+            var parser = _serviceProviderWithSimilarity.GetRequiredService<ICommandLineParser>();
             var validJson = "{\"name\":\"test\",\"value\":123}";
             var args = new[] { validJson };
+            var options = parser.Parse(args);
 
             // Setup mock similarity service with test data
             var mockSimilarityService = _serviceProviderWithSimilarity.GetRequiredService<ISimilarityService>() as SimilarityService;
@@ -174,7 +181,7 @@ namespace JSON_Whisperer.Tests
             mockVectorService?.SetConnected(true);
 
             // Act
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
 
             // Assert
             // Should be 0 (success) or 1 (Ollama not available)
@@ -186,8 +193,10 @@ namespace JSON_Whisperer.Tests
         {
             // Arrange
             var app = _serviceProviderWithSimilarity.GetRequiredService<JsonWhispererApplication>();
+            var parser = _serviceProviderWithSimilarity.GetRequiredService<ICommandLineParser>();
             var validJson = "{\"name\":\"test\",\"value\":123}";
             var args = new[] { validJson };
+            var options = parser.Parse(args);
 
             // Setup mock services to be unavailable
             var mockEmbeddingService = _serviceProviderWithSimilarity.GetRequiredService<IEmbeddingService>() as MockEmbeddingService;
@@ -197,7 +206,7 @@ namespace JSON_Whisperer.Tests
             mockVectorService?.SetConnected(false);
 
             // Act
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
 
             // Assert
             // Should still work without similarity matching
@@ -223,6 +232,8 @@ namespace JSON_Whisperer.Tests
             // Input JSON similar to user example
             var inputJson = "{\"user\": {\"name\": \"Bob\", \"age\": 30, \"email\": \"bob@example.com\"}}";
             var args = new[] { inputJson };
+            var parser = _serviceProviderWithSimilarity.GetRequiredService<ICommandLineParser>();
+            var options = parser.Parse(args);
 
             // Setup mock services
             var mockEmbeddingService = _serviceProviderWithSimilarity.GetRequiredService<IEmbeddingService>() as MockEmbeddingService;
@@ -252,7 +263,7 @@ namespace JSON_Whisperer.Tests
             mockVectorService?.SetupSimilarMatches(inputEmbedding, similarityMatches);
 
             // Act
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
 
             // Assert
             Assert.That(result, Is.InRange(0, 1));
@@ -263,11 +274,13 @@ namespace JSON_Whisperer.Tests
         {
             // Arrange
             var app = _serviceProvider.GetRequiredService<JsonWhispererApplication>();
+            var parser = _serviceProvider.GetRequiredService<ICommandLineParser>();
             var invalidJson = "{invalid json}";
             var args = new[] { invalidJson };
+            var options = parser.Parse(args);
 
             // Act
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
 
             // Assert
             Assert.That(result, Is.EqualTo(1));
@@ -278,10 +291,12 @@ namespace JSON_Whisperer.Tests
         {
             // Arrange
             var app = _serviceProvider.GetRequiredService<JsonWhispererApplication>();
+            var parser = _serviceProvider.GetRequiredService<ICommandLineParser>();
             var args = new string[0];
+            var options = parser.Parse(args);
 
             // Act
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
 
             // Assert
             // Should return error since no stdin input is provided in test environment
@@ -311,9 +326,11 @@ namespace JSON_Whisperer.Tests
                 }
             }";
             var args = new[] { complexJson };
+            var parser = _serviceProvider.GetRequiredService<ICommandLineParser>();
+            var options = parser.Parse(args);
 
             // Act
-            var result = await app.RunAsync(args);
+            var result = await app.RunAsync(args, options);
 
             // Assert
             // Should be 0 (success) or 1 (Ollama not available)
@@ -405,6 +422,8 @@ namespace JSON_Whisperer.Tests
         public Task<long> GetEmbeddingCountAsync() => Task.FromResult(0L);
         public Task<bool> EmbeddingExistsAsync(string id) => Task.FromResult(false);
         public Task<bool> DeleteEmbeddingAsync(string id) => Task.FromResult(false);
+        public Task<int> DeleteAllEmbeddingsAsync() => Task.FromResult(0);
+        public Task<List<string>> GetAllEmbeddingIdsAsync() => Task.FromResult(new List<string>());
         public Task DisposeAsync() => Task.CompletedTask;
     }
 

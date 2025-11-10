@@ -140,11 +140,41 @@ dotnet run --project JSON-Whisperer -- -h
 
 ### Command Line Flags
 
+#### Input and Display Options
+
 | Flag | Short | Description | Example |
 |------|-------|-------------|---------|
 | `--file` | `-f` | Read JSON from specified file | `--file data.json` |
 | `--verbose` | `-v` | Enable verbose output with detailed logging | `--verbose` |
+| `--no-similarity` | | Disable vector similarity matching for faster processing | `--no-similarity` |
 | `--help` | `-h` | Show help information | `--help` |
+
+#### Diagnostic Commands
+
+| Flag | Description | Exit Code |
+|------|-------------|-----------|
+| `--health-check` | Verify all services (Ollama, ScyllaDB, embeddings) are operational | 0 = healthy, 1 = unhealthy |
+| `--validate-config` | Validate configuration settings and service connectivity | 0 = valid, 1 = invalid |
+| `--test-ollama` | Test Ollama service connectivity and model availability | 0 = success, 1 = failure |
+| `--test-scylla` | Test ScyllaDB connectivity and keyspace verification | 0 = success, 1 = failure |
+| `--test-embedding` | Test embedding generation with nomic-embed-text model | 0 = success, 1 = failure |
+| `--test-similarity` | Test similarity search functionality | 0 = success, 1 = failure |
+
+#### Knowledge Base Management
+
+| Flag | Description | Exit Code |
+|------|-------------|-----------|
+| `--reinitialize-knowledge-base` | Clear and regenerate all embeddings from AppData files | 0 = success, 1 = failure |
+| `--validate-knowledge-base` | Verify JSON files and description files are valid | 0 = valid, 1 = invalid |
+
+#### Performance Benchmarks
+
+| Flag | Description | Exit Code |
+|------|-------------|-----------|
+| `--benchmark-all` | Run all available performance benchmarks | 0 = success |
+| `--benchmark-similarity` | Benchmark similarity search performance | 0 = success |
+| `--benchmark-vector-operations` | Benchmark embedding generation and storage | 0 = success |
+| `--benchmark-embedding` | Benchmark embedding generation speed | 0 = success |
 
 **Note**: Always use `--` to separate dotnet run arguments from application arguments:
 ```bash
@@ -353,21 +383,87 @@ docker run -e OLLAMA_BASE_URL=http://host.docker.internal:11434 json-whisperer '
 
 ### Diagnostic Commands
 
+The application includes comprehensive diagnostic commands for testing and troubleshooting:
+
 ```bash
-# Check Ollama status
-curl http://localhost:11434/api/tags
+# System Health Check - Verify all services are operational
+dotnet run --project JSON-Whisperer -- --health-check
 
-# Test with simple JSON
+# Configuration Validation - Check all settings are valid
+dotnet run --project JSON-Whisperer -- --validate-config
+
+# Test Individual Services
+dotnet run --project JSON-Whisperer -- --test-ollama      # Test Ollama connectivity
+dotnet run --project JSON-Whisperer -- --test-scylla      # Test ScyllaDB connectivity
+dotnet run --project JSON-Whisperer -- --test-embedding   # Test embedding generation
+dotnet run --project JSON-Whisperer -- --test-similarity  # Test similarity search
+
+# Knowledge Base Management
+dotnet run --project JSON-Whisperer -- --validate-knowledge-base      # Verify JSON files
+dotnet run --project JSON-Whisperer -- --reinitialize-knowledge-base  # Regenerate embeddings
+
+# Performance Benchmarks
+dotnet run --project JSON-Whisperer -- --benchmark-all              # Run all benchmarks
+dotnet run --project JSON-Whisperer -- --benchmark-similarity       # Benchmark similarity search
+dotnet run --project JSON-Whisperer -- --benchmark-vector-operations # Benchmark vector ops
+dotnet run --project JSON-Whisperer -- --benchmark-embedding        # Benchmark embeddings
+
+# Basic Testing
 echo '{"test": true}' | dotnet run --project JSON-Whisperer
-
-# Test file input with verbose logging
 dotnet run --project JSON-Whisperer -- --file test.json --verbose
-
-# Enable verbose logging with direct JSON
 dotnet run --project JSON-Whisperer -- --verbose '{"debug": true}'
-
-# Show help and available options
 dotnet run --project JSON-Whisperer -- --help
+```
+
+#### Exit Codes
+
+The application uses standard exit codes for automation and CI/CD integration:
+
+| Exit Code | Meaning | When Returned |
+|-----------|---------|---------------|
+| 0 | Success | All operations completed successfully, all health checks passed, all tests passed |
+| 1 | Failure | Service unavailable, health check failed, test failed, validation error, or unexpected error |
+
+**Exit Code Usage Examples:**
+
+```bash
+# Example 1: Check health before processing
+if dotnet JSON-Whisperer.dll --health-check; then
+  echo "All services healthy, proceeding..."
+  dotnet JSON-Whisperer.dll --file data.json
+else
+  echo "Health check failed, aborting"
+  exit 1
+fi
+
+# Example 2: Validate configuration in CI/CD pipeline
+dotnet JSON-Whisperer.dll --validate-config
+if [ $? -eq 0 ]; then
+  echo "Configuration valid"
+else
+  echo "Configuration validation failed"
+  exit 1
+fi
+
+# Example 3: Test services before deployment
+dotnet JSON-Whisperer.dll --test-ollama && \
+dotnet JSON-Whisperer.dll --test-scylla && \
+dotnet JSON-Whisperer.dll --test-embedding
+if [ $? -eq 0 ]; then
+  echo "All service tests passed"
+else
+  echo "Service tests failed"
+  exit 1
+fi
+
+# Example 4: Run benchmarks and capture results
+if dotnet JSON-Whisperer.dll --benchmark-all > benchmark-results.txt; then
+  echo "Benchmarks completed successfully"
+  cat benchmark-results.txt
+else
+  echo "Benchmarks failed"
+  exit 1
+fi
 ```
 
 ### Log Analysis
@@ -429,9 +525,80 @@ JSON-Whisperer/
 
 [Add your license information here]
 
+## Exit Code Reference
+
+The application uses consistent exit codes for all operations, making it suitable for automation, scripting, and CI/CD pipelines.
+
+### Exit Code Summary
+
+| Exit Code | Status | Description |
+|-----------|--------|-------------|
+| 0 | Success | Operation completed successfully |
+| 1 | Failure | Operation failed (see specific scenarios below) |
+
+### Exit Code Scenarios
+
+#### Exit Code 0 (Success)
+- Normal JSON processing completed successfully
+- Health check passed (all services healthy)
+- Configuration validation passed (all settings valid)
+- Service test passed (service is operational)
+- Knowledge base validation passed (all files valid)
+- Knowledge base reinitialization completed successfully
+- Benchmark completed successfully
+- Help information displayed
+
+#### Exit Code 1 (Failure)
+- JSON parsing error
+- Ollama service unavailable or unreachable
+- ScyllaDB connection failed
+- Embedding generation failed
+- Health check failed (one or more services unhealthy)
+- Configuration validation failed (invalid settings)
+- Service test failed (service not operational)
+- Knowledge base validation failed (invalid files)
+- Knowledge base reinitialization failed
+- Invalid command-line arguments
+- Unexpected error or exception
+
+### Using Exit Codes in Scripts
+
+```bash
+# Example 1: Simple health check
+if dotnet JSON-Whisperer.dll --health-check; then
+  echo "Services are healthy"
+else
+  echo "Services are unhealthy"
+  exit 1
+fi
+
+# Example 2: Pre-deployment validation
+dotnet JSON-Whisperer.dll --validate-config || exit 1
+dotnet JSON-Whisperer.dll --health-check || exit 1
+echo "Deployment validation passed"
+
+# Example 3: Conditional processing
+if dotnet JSON-Whisperer.dll --test-ollama; then
+  echo "Processing JSON with Ollama..."
+  dotnet JSON-Whisperer.dll --file data.json
+else
+  echo "Ollama unavailable, skipping processing"
+fi
+
+# Example 4: CI/CD pipeline
+set -e  # Exit on any failure
+dotnet JSON-Whisperer.dll --validate-config
+dotnet JSON-Whisperer.dll --health-check
+dotnet JSON-Whisperer.dll --test-ollama
+dotnet JSON-Whisperer.dll --test-scylla
+echo "All checks passed, proceeding with deployment"
+```
+
 ## Support
 
 For issues and questions:
 - Check the [troubleshooting section](#troubleshooting)
+- Run diagnostic commands to identify issues
 - Review application logs with verbose mode enabled
 - Verify Ollama service status and model availability
+- Use `--health-check` to verify all services are operational

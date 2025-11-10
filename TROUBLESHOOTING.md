@@ -19,14 +19,39 @@ This guide provides detailed troubleshooting steps for common issues with JSON-W
 
 ### System Health Check
 ```bash
-# Run comprehensive health check
+# Run comprehensive health check (checks all services)
 dotnet JSON-Whisperer.dll --health-check
 
 # Check individual components
-dotnet JSON-Whisperer.dll --check-ollama
-dotnet JSON-Whisperer.dll --check-scylla
-dotnet JSON-Whisperer.dll --check-embedding-service
+dotnet JSON-Whisperer.dll --test-ollama      # Test Ollama service
+dotnet JSON-Whisperer.dll --test-scylla      # Test ScyllaDB
+dotnet JSON-Whisperer.dll --test-embedding   # Test embedding generation
+dotnet JSON-Whisperer.dll --test-similarity  # Test similarity search
+
+# Validate configuration
 dotnet JSON-Whisperer.dll --validate-config
+
+# Validate knowledge base
+dotnet JSON-Whisperer.dll --validate-knowledge-base
+```
+
+**Health Check Exit Codes:**
+- Exit code 0: All services healthy
+- Exit code 1: One or more services unhealthy
+
+**Example Usage in Scripts:**
+```bash
+# Check health before running application
+if ! dotnet JSON-Whisperer.dll --health-check; then
+  echo "ERROR: Health check failed. Please check service status."
+  exit 1
+fi
+
+# Validate configuration before deployment
+if ! dotnet JSON-Whisperer.dll --validate-config; then
+  echo "ERROR: Configuration validation failed."
+  exit 1
+fi
 ```
 
 ### Component Status Overview
@@ -36,6 +61,11 @@ docker ps | grep -E "(ollama|scylla|json-whisperer)"
 
 # Test basic functionality
 echo '{"test": "data"}' | dotnet JSON-Whisperer.dll --verbose
+
+# Run all diagnostic commands
+dotnet JSON-Whisperer.dll --health-check
+dotnet JSON-Whisperer.dll --validate-config
+dotnet JSON-Whisperer.dll --validate-knowledge-base
 ```
 
 ## Vector Similarity Issues
@@ -858,27 +888,81 @@ df -h
 
 ### Useful Diagnostic Commands
 
+All diagnostic commands return exit code 0 on success and exit code 1 on failure, making them suitable for automation and CI/CD pipelines.
+
 ```bash
-# Application diagnostics
-dotnet JSON-Whisperer.dll --health-check
-dotnet JSON-Whisperer.dll --validate-config
-dotnet JSON-Whisperer.dll --test-all-services
+# System Health and Configuration
+dotnet JSON-Whisperer.dll --health-check              # Check all services (exit 0 if healthy)
+dotnet JSON-Whisperer.dll --validate-config           # Validate configuration (exit 0 if valid)
 
-# Component-specific tests
-dotnet JSON-Whisperer.dll --test-ollama
-dotnet JSON-Whisperer.dll --test-scylla
-dotnet JSON-Whisperer.dll --test-embedding
-dotnet JSON-Whisperer.dll --test-similarity
+# Component-Specific Tests
+dotnet JSON-Whisperer.dll --test-ollama               # Test Ollama service (exit 0 if passing)
+dotnet JSON-Whisperer.dll --test-scylla               # Test ScyllaDB (exit 0 if passing)
+dotnet JSON-Whisperer.dll --test-embedding            # Test embedding generation (exit 0 if passing)
+dotnet JSON-Whisperer.dll --test-similarity           # Test similarity search (exit 0 if passing)
 
-# Performance benchmarks
-dotnet JSON-Whisperer.dll --benchmark-all
-dotnet JSON-Whisperer.dll --benchmark-vector-ops
-dotnet JSON-Whisperer.dll --benchmark-similarity
+# Knowledge Base Management
+dotnet JSON-Whisperer.dll --validate-knowledge-base   # Validate JSON files (exit 0 if valid)
+dotnet JSON-Whisperer.dll --reinitialize-knowledge-base  # Regenerate embeddings (exit 0 if successful)
 
-# Maintenance operations
-dotnet JSON-Whisperer.dll --clear-cache
-dotnet JSON-Whisperer.dll --reinit-knowledge-base
-dotnet JSON-Whisperer.dll --optimize-database
+# Performance Benchmarks
+dotnet JSON-Whisperer.dll --benchmark-all             # Run all benchmarks (exit 0 on completion)
+dotnet JSON-Whisperer.dll --benchmark-similarity      # Benchmark similarity search
+dotnet JSON-Whisperer.dll --benchmark-vector-operations  # Benchmark vector operations
+dotnet JSON-Whisperer.dll --benchmark-embedding       # Benchmark embedding generation
+```
+
+**Using Diagnostic Commands in Scripts:**
+
+```bash
+#!/bin/bash
+# Pre-deployment health check script
+
+echo "Running pre-deployment diagnostics..."
+
+# Check configuration
+if ! dotnet JSON-Whisperer.dll --validate-config; then
+  echo "❌ Configuration validation failed"
+  exit 1
+fi
+echo "✓ Configuration valid"
+
+# Check all services
+if ! dotnet JSON-Whisperer.dll --health-check; then
+  echo "❌ Health check failed"
+  exit 1
+fi
+echo "✓ All services healthy"
+
+# Validate knowledge base
+if ! dotnet JSON-Whisperer.dll --validate-knowledge-base; then
+  echo "❌ Knowledge base validation failed"
+  exit 1
+fi
+echo "✓ Knowledge base valid"
+
+echo "✓ All pre-deployment checks passed"
+exit 0
+```
+
+**CI/CD Pipeline Integration:**
+
+```yaml
+# Example GitHub Actions workflow
+- name: Validate Configuration
+  run: dotnet JSON-Whisperer.dll --validate-config
+
+- name: Health Check
+  run: dotnet JSON-Whisperer.dll --health-check
+
+- name: Test Services
+  run: |
+    dotnet JSON-Whisperer.dll --test-ollama
+    dotnet JSON-Whisperer.dll --test-scylla
+    dotnet JSON-Whisperer.dll --test-embedding
+
+- name: Run Benchmarks
+  run: dotnet JSON-Whisperer.dll --benchmark-all > benchmark-results.txt
 ```
 
 This troubleshooting guide should help you diagnose and resolve most issues with JSON-Whisperer, especially those related to vector similarity matching and ScyllaDB integration.

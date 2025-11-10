@@ -225,6 +225,8 @@ dotnet JSON-Whisperer.dll --verbose '{
 
 ### Available Options
 
+#### Input and Processing Options
+
 ```bash
 # Show help
 dotnet JSON-Whisperer.dll --help
@@ -235,26 +237,231 @@ dotnet JSON-Whisperer.dll --verbose '{"data": "example"}'
 # File input
 dotnet JSON-Whisperer.dll --file path/to/file.json
 
-# Disable similarity matching
+# Disable similarity matching for faster processing
 dotnet JSON-Whisperer.dll --no-similarity '{"data": "example"}'
+```
 
-# Health check
+#### Diagnostic Commands
+
+```bash
+# System Health Check - Verify all services are operational
 dotnet JSON-Whisperer.dll --health-check
 
-# Configuration validation
+# Configuration Validation - Check all settings are valid
 dotnet JSON-Whisperer.dll --validate-config
 
-# Test individual services
-dotnet JSON-Whisperer.dll --test-ollama
-dotnet JSON-Whisperer.dll --test-scylla
-dotnet JSON-Whisperer.dll --test-embedding
+# Test Individual Services
+dotnet JSON-Whisperer.dll --test-ollama      # Test Ollama connectivity and model
+dotnet JSON-Whisperer.dll --test-scylla      # Test ScyllaDB connectivity and keyspace
+dotnet JSON-Whisperer.dll --test-embedding   # Test embedding generation
+dotnet JSON-Whisperer.dll --test-similarity  # Test similarity search functionality
+```
 
-# Reinitialize knowledge base
+**Example Health Check Output:**
+```
+=== System Health Check ===
+
+✓ Ollama Service: Healthy (Response time: 45ms)
+  - Base URL: http://localhost:11434
+  - Model: mistral (available)
+  - Embedding Model: nomic-embed-text (available)
+
+✓ ScyllaDB: Healthy (Response time: 23ms)
+  - Contact Points: 127.0.0.1:9042
+  - Keyspace: json_whisperer (exists)
+  - Connection: Active
+
+✓ Embedding Service: Healthy (Response time: 156ms)
+  - Model: nomic-embed-text
+  - Embedding Dimensions: 768
+  - Test Embedding: Generated successfully
+
+✓ Knowledge Base: Healthy
+  - JSON Files: 15 files found
+  - Embeddings: 15 embeddings stored
+  - Status: Initialized
+
+=== Health Check Summary ===
+All services are operational
+Total check duration: 1.2 seconds
+Exit code: 0
+```
+
+**Example Configuration Validation Output:**
+```
+=== Configuration Validation ===
+
+✓ Ollama Configuration: Valid
+  - BaseUrl: http://localhost:11434 (reachable)
+  - ModelName: mistral (valid)
+  - EmbeddingModel: nomic-embed-text (valid)
+  - TimeoutSeconds: 30 (valid range)
+
+✓ ScyllaDB Configuration: Valid
+  - ContactPoints: 127.0.0.1 (valid)
+  - Port: 9042 (valid range)
+  - Keyspace: json_whisperer (valid)
+
+✓ Vector Configuration: Valid
+  - SimilarityThreshold: 0.7 (valid range: 0.0-1.0)
+  - MaxSimilarResults: 5 (valid)
+  - AppDataPath: AppData (exists)
+
+✓ Application Configuration: Valid
+  - MaxJsonSizeBytes: 10485760 (valid)
+  - VerboseMode: false
+
+=== Validation Summary ===
+All configuration settings are valid
+Exit code: 0
+```
+
+**Example Service Test Output:**
+```bash
+# Test Ollama service
+$ dotnet JSON-Whisperer.dll --test-ollama
+
+=== Ollama Service Test ===
+
+Testing connection to http://localhost:11434...
+✓ Connection successful (45ms)
+
+Testing model availability...
+✓ Model 'mistral' is available
+✓ Model 'nomic-embed-text' is available
+
+Testing text generation...
+✓ Text generation successful (1.2s)
+
+Testing embedding generation...
+✓ Embedding generation successful (156ms)
+✓ Embedding dimensions: 768 (expected: 768)
+
+=== Test Summary ===
+All Ollama tests passed
+Exit code: 0
+```
+
+#### Knowledge Base Management
+
+```bash
+# Validate knowledge base files
+dotnet JSON-Whisperer.dll --validate-knowledge-base
+
+# Reinitialize knowledge base (clear and regenerate embeddings)
 dotnet JSON-Whisperer.dll --reinitialize-knowledge-base
+```
 
-# Performance benchmarks
+**Example Knowledge Base Validation Output:**
+```
+=== Knowledge Base Validation ===
+
+Scanning AppData directory: AppData/examples
+
+JSON Files Found: 15
+✓ user-profile.json (valid JSON, description exists)
+✓ product-catalog.json (valid JSON, description exists)
+✓ order-data.json (valid JSON, description exists)
+✓ api-response.json (valid JSON, description exists)
+✓ customer-data.json (valid JSON, description exists)
+... (10 more files)
+
+=== Validation Summary ===
+Total Files: 15
+Valid JSON: 15
+Valid Descriptions: 15
+Errors: 0
+
+Knowledge base is valid
+Exit code: 0
+```
+
+**Example Knowledge Base Reinitialization Output:**
+```
+=== Knowledge Base Reinitialization ===
+
+Step 1: Clearing existing embeddings...
+✓ Cleared 15 embeddings from ScyllaDB
+
+Step 2: Scanning JSON files...
+✓ Found 15 JSON files in AppData/examples
+
+Step 3: Generating embeddings...
+[1/15] Processing user-profile.json... ✓ (234ms)
+[2/15] Processing product-catalog.json... ✓ (198ms)
+[3/15] Processing order-data.json... ✓ (212ms)
+[4/15] Processing api-response.json... ✓ (189ms)
+... (11 more files)
+
+Step 4: Storing embeddings in ScyllaDB...
+✓ Stored 15 embeddings successfully
+
+=== Reinitialization Summary ===
+Files Processed: 15
+Embeddings Created: 15
+Errors: 0
+Total Duration: 4.5 seconds
+
+Knowledge base reinitialized successfully
+Exit code: 0
+```
+
+#### Performance Benchmarks
+
+```bash
+# Run all benchmarks
 dotnet JSON-Whisperer.dll --benchmark-all
-dotnet JSON-Whisperer.dll --benchmark-similarity
+
+# Run specific benchmarks
+dotnet JSON-Whisperer.dll --benchmark-similarity         # Similarity search performance
+dotnet JSON-Whisperer.dll --benchmark-vector-operations  # Vector operations performance
+dotnet JSON-Whisperer.dll --benchmark-embedding          # Embedding generation speed
+```
+
+**Example Benchmark Output:**
+```
+=== Performance Benchmarks ===
+
+Benchmark 1: Similarity Search
+Running 100 iterations...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+
+Results:
+  Total Duration: 12.5 seconds
+  Average Duration: 125ms per search
+  Operations/Second: 8.0
+  Memory Used: 45 MB
+  Min Duration: 98ms
+  Max Duration: 234ms
+
+Benchmark 2: Vector Operations
+Running 100 iterations...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+
+Results:
+  Total Duration: 8.2 seconds
+  Average Duration: 82ms per operation
+  Operations/Second: 12.2
+  Memory Used: 32 MB
+  Min Duration: 67ms
+  Max Duration: 156ms
+
+Benchmark 3: Embedding Generation
+Running 100 iterations...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+
+Results:
+  Total Duration: 15.6 seconds
+  Average Duration: 156ms per embedding
+  Operations/Second: 6.4
+  Memory Used: 28 MB
+  Min Duration: 134ms
+  Max Duration: 289ms
+
+=== Benchmark Summary ===
+All benchmarks completed successfully
+Total Duration: 36.3 seconds
+Exit code: 0
 ```
 
 ### Combining Options
@@ -521,32 +728,452 @@ EOF
 dotnet JSON-Whisperer.dll --config minimal-config.json '{"test": "data"}'
 ```
 
+## Exit Codes and Automation
+
+### Understanding Exit Codes
+
+All diagnostic commands and normal operations return consistent exit codes:
+- **Exit Code 0**: Success
+- **Exit Code 1**: Failure
+
+This makes JSON-Whisperer suitable for automation, scripting, and CI/CD integration.
+
+### Exit Code Examples
+
+#### Basic Exit Code Handling
+
+```bash
+# Check exit code explicitly
+dotnet JSON-Whisperer.dll --health-check
+if [ $? -eq 0 ]; then
+  echo "Health check passed"
+else
+  echo "Health check failed"
+fi
+
+# Use exit code in conditional
+if dotnet JSON-Whisperer.dll --validate-config; then
+  echo "Configuration is valid"
+  dotnet JSON-Whisperer.dll --file data.json
+else
+  echo "Configuration is invalid, aborting"
+  exit 1
+fi
+```
+
+#### Chaining Commands
+
+```bash
+# Stop on first failure (using &&)
+dotnet JSON-Whisperer.dll --validate-config && \
+dotnet JSON-Whisperer.dll --health-check && \
+dotnet JSON-Whisperer.dll --file data.json
+
+# Continue on failure (using ||)
+dotnet JSON-Whisperer.dll --health-check || echo "Health check failed, but continuing..."
+
+# Set -e to exit on any failure
+set -e
+dotnet JSON-Whisperer.dll --validate-config
+dotnet JSON-Whisperer.dll --health-check
+dotnet JSON-Whisperer.dll --test-ollama
+echo "All checks passed"
+```
+
+#### Retry Logic with Exit Codes
+
+```bash
+#!/bin/bash
+# Retry health check up to 5 times
+
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if dotnet JSON-Whisperer.dll --health-check; then
+    echo "Health check passed"
+    exit 0
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "Attempt $RETRY_COUNT failed, retrying..."
+    sleep 10
+  fi
+done
+
+echo "Health check failed after $MAX_RETRIES attempts"
+exit 1
+```
+
+#### Capturing and Logging Results
+
+```bash
+#!/bin/bash
+# Run diagnostics and log results
+
+LOG_FILE="diagnostics-$(date +%Y%m%d-%H%M%S).log"
+
+echo "=== Diagnostic Report ===" > "$LOG_FILE"
+echo "Date: $(date)" >> "$LOG_FILE"
+echo "" >> "$LOG_FILE"
+
+# Configuration validation
+echo "Configuration Validation:" >> "$LOG_FILE"
+if dotnet JSON-Whisperer.dll --validate-config >> "$LOG_FILE" 2>&1; then
+  echo "Status: PASSED" >> "$LOG_FILE"
+else
+  echo "Status: FAILED" >> "$LOG_FILE"
+fi
+echo "" >> "$LOG_FILE"
+
+# Health check
+echo "Health Check:" >> "$LOG_FILE"
+if dotnet JSON-Whisperer.dll --health-check >> "$LOG_FILE" 2>&1; then
+  echo "Status: PASSED" >> "$LOG_FILE"
+else
+  echo "Status: FAILED" >> "$LOG_FILE"
+fi
+echo "" >> "$LOG_FILE"
+
+# Service tests
+for service in ollama scylla embedding; do
+  echo "Testing $service:" >> "$LOG_FILE"
+  if dotnet JSON-Whisperer.dll --test-$service >> "$LOG_FILE" 2>&1; then
+    echo "Status: PASSED" >> "$LOG_FILE"
+  else
+    echo "Status: FAILED" >> "$LOG_FILE"
+  fi
+  echo "" >> "$LOG_FILE"
+done
+
+echo "Diagnostic report saved to $LOG_FILE"
+```
+
 ## Integration Examples
 
 ### CI/CD Pipeline Integration
 
 ```yaml
-# GitHub Actions example
-name: JSON Analysis
-on: [push]
+# GitHub Actions - Comprehensive Example
+name: JSON-Whisperer CI/CD
+on: [push, pull_request]
+
 jobs:
-  analyze:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
+      
       - name: Start services
         run: docker-compose up -d
-      - name: Wait for services
-        run: sleep 30
-      - name: Analyze JSON files
+      
+      - name: Wait for services to be ready
         run: |
+          echo "Waiting for services to start..."
+          sleep 30
+      
+      - name: Validate Configuration
+        run: |
+          dotnet JSON-Whisperer.dll --validate-config
+          if [ $? -ne 0 ]; then
+            echo "Configuration validation failed"
+            exit 1
+          fi
+      
+      - name: Health Check
+        run: |
+          dotnet JSON-Whisperer.dll --health-check
+          if [ $? -ne 0 ]; then
+            echo "Health check failed"
+            docker-compose logs
+            exit 1
+          fi
+      
+      - name: Test Individual Services
+        run: |
+          dotnet JSON-Whisperer.dll --test-ollama || exit 1
+          dotnet JSON-Whisperer.dll --test-scylla || exit 1
+          dotnet JSON-Whisperer.dll --test-embedding || exit 1
+      
+      - name: Validate Knowledge Base
+        run: dotnet JSON-Whisperer.dll --validate-knowledge-base
+      
+      - name: Run Benchmarks
+        run: |
+          dotnet JSON-Whisperer.dll --benchmark-all > benchmark-results.txt
+          cat benchmark-results.txt
+      
+      - name: Analyze Test JSON Files
+        run: |
+          mkdir -p analysis-results
           for file in test-data/*.json; do
-            dotnet JSON-Whisperer.dll --file "$file" > "analysis/$(basename $file).txt"
+            echo "Analyzing $file..."
+            dotnet JSON-Whisperer.dll --file "$file" > "analysis-results/$(basename $file).txt"
           done
+      
+      - name: Upload Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: analysis-results
+          path: analysis-results/
+      
+      - name: Cleanup
+        if: always()
+        run: docker-compose down
+
+# GitLab CI - Comprehensive Example
+stages:
+  - validate
+  - test
+  - benchmark
+  - deploy
+
+validate-config:
+  stage: validate
+  script:
+    - dotnet JSON-Whisperer.dll --validate-config
+  allow_failure: false
+
+health-check:
+  stage: test
+  script:
+    - docker-compose up -d
+    - sleep 30
+    - dotnet JSON-Whisperer.dll --health-check
+  after_script:
+    - docker-compose down
+
+test-services:
+  stage: test
+  script:
+    - docker-compose up -d
+    - sleep 30
+    - dotnet JSON-Whisperer.dll --test-ollama
+    - dotnet JSON-Whisperer.dll --test-scylla
+    - dotnet JSON-Whisperer.dll --test-embedding
+    - dotnet JSON-Whisperer.dll --test-similarity
+  after_script:
+    - docker-compose down
+
+run-benchmarks:
+  stage: benchmark
+  script:
+    - docker-compose up -d
+    - sleep 30
+    - dotnet JSON-Whisperer.dll --benchmark-all > benchmark-results.txt
+  artifacts:
+    paths:
+      - benchmark-results.txt
+    expire_in: 1 week
+  after_script:
+    - docker-compose down
+
+deploy-production:
+  stage: deploy
+  script:
+    - dotnet JSON-Whisperer.dll --validate-config
+    - dotnet JSON-Whisperer.dll --health-check
+    - ./deploy.sh
+  only:
+    - main
+  when: manual
+
+# Jenkins Pipeline - Comprehensive Example
+pipeline {
+  agent any
+  
+  stages {
+    stage('Setup') {
+      steps {
+        sh 'docker-compose up -d'
+        sh 'sleep 30'
+      }
+    }
+    
+    stage('Validate Configuration') {
+      steps {
+        script {
+          def result = sh(
+            script: 'dotnet JSON-Whisperer.dll --validate-config',
+            returnStatus: true
+          )
+          if (result != 0) {
+            error('Configuration validation failed')
+          }
+        }
+      }
+    }
+    
+    stage('Health Check') {
+      steps {
+        script {
+          def result = sh(
+            script: 'dotnet JSON-Whisperer.dll --health-check',
+            returnStatus: true
+          )
+          if (result != 0) {
+            error('Health check failed')
+          }
+        }
+      }
+    }
+    
+    stage('Test Services') {
+      parallel {
+        stage('Test Ollama') {
+          steps {
+            sh 'dotnet JSON-Whisperer.dll --test-ollama'
+          }
+        }
+        stage('Test ScyllaDB') {
+          steps {
+            sh 'dotnet JSON-Whisperer.dll --test-scylla'
+          }
+        }
+        stage('Test Embedding') {
+          steps {
+            sh 'dotnet JSON-Whisperer.dll --test-embedding'
+          }
+        }
+      }
+    }
+    
+    stage('Validate Knowledge Base') {
+      steps {
+        sh 'dotnet JSON-Whisperer.dll --validate-knowledge-base'
+      }
+    }
+    
+    stage('Run Benchmarks') {
+      steps {
+        sh 'dotnet JSON-Whisperer.dll --benchmark-all > benchmark-results.txt'
+        archiveArtifacts artifacts: 'benchmark-results.txt'
+      }
+    }
+    
+    stage('Deploy') {
+      when {
+        branch 'main'
+      }
+      steps {
+        input message: 'Deploy to production?'
+        sh './deploy.sh'
+      }
+    }
+  }
+  
+  post {
+    always {
+      sh 'docker-compose down'
+    }
+    failure {
+      mail to: 'team@example.com',
+           subject: "Pipeline Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+           body: "Check console output at ${env.BUILD_URL}"
+    }
+  }
+}
+```
+
+### Azure DevOps Pipeline
+
+```yaml
+# azure-pipelines.yml
+trigger:
+  - main
+  - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Validate
+  jobs:
+  - job: ValidateConfig
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: '9.0.x'
+    
+    - script: |
+        dotnet JSON-Whisperer.dll --validate-config
+      displayName: 'Validate Configuration'
+      failOnStderr: true
+
+- stage: Test
+  jobs:
+  - job: HealthCheck
+    steps:
+    - script: |
+        docker-compose up -d
+        sleep 30
+        dotnet JSON-Whisperer.dll --health-check
+      displayName: 'Run Health Check'
+      failOnStderr: true
+    
+    - script: docker-compose down
+      displayName: 'Cleanup'
+      condition: always()
+  
+  - job: ServiceTests
+    steps:
+    - script: |
+        docker-compose up -d
+        sleep 30
+      displayName: 'Start Services'
+    
+    - script: dotnet JSON-Whisperer.dll --test-ollama
+      displayName: 'Test Ollama'
+    
+    - script: dotnet JSON-Whisperer.dll --test-scylla
+      displayName: 'Test ScyllaDB'
+    
+    - script: dotnet JSON-Whisperer.dll --test-embedding
+      displayName: 'Test Embedding'
+    
+    - script: docker-compose down
+      displayName: 'Cleanup'
+      condition: always()
+
+- stage: Benchmark
+  jobs:
+  - job: RunBenchmarks
+    steps:
+    - script: |
+        docker-compose up -d
+        sleep 30
+        dotnet JSON-Whisperer.dll --benchmark-all > $(Build.ArtifactStagingDirectory)/benchmark-results.txt
+      displayName: 'Run Benchmarks'
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'benchmarks'
+    
+    - script: docker-compose down
+      displayName: 'Cleanup'
+      condition: always()
+
+- stage: Deploy
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployProduction
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              dotnet JSON-Whisperer.dll --validate-config
+              dotnet JSON-Whisperer.dll --health-check
+            displayName: 'Pre-Deployment Validation'
+          
+          - script: ./deploy.sh
+            displayName: 'Deploy Application'
 ```
 
 ### Monitoring Integration
